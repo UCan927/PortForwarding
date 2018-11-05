@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{d3e2e310-cf8a-4cb2-bf14-7809aa5bbba6}</ProjectGuid>
+    <ProjectGuid>{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>UCanSoft.PortForwarding</RootNamespace>
@@ -13,8 +13,13 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Codec\CodecFactory.cs" />
+    <Compile Include="Codec\Decoder.cs" />
+    <Compile Include="Codec\Encoder.cs" />
+    <Compile Include="Core\MessageHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility\Helper\SingleInstanceHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
