@@ -12,6 +12,7 @@ using System.Text;
 using System.Threading.Tasks;
 using UCanSoft.PortForwarding.Codec;
 using UCanSoft.PortForwarding.Core;
+using UCanSoft.PortForwarding.Utility.Helper;
 
 namespace UCanSoft.PortForwarding
 {
@@ -32,7 +33,7 @@ namespace UCanSoft.PortForwarding
 
             AsyncSocketAcceptor acceptor = new AsyncSocketAcceptor();
             acceptor.FilterChain.AddFirst("codec", new ProtocolCodecFilter(new CodecFactory()));
-            acceptor.Handler = new MessageHandler();
+            acceptor.Handler = SingleInstanceHelper<MessageHandler>.Instance;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("按S键启动监听;");
