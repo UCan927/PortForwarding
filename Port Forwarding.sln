@@ -1,0 +1,62 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 15
+VisualStudioVersion = 15.0.28010.2050
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Source Code", "Source Code", "{2EE7B669-2D03-4058-AC4A-BE131B05B68D}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Build Support", "Build Support", "{AABFF519-0CF6-40B3-8E85-8ED3AAFD22B8}"
+	ProjectSection(SolutionItems) = preProject
+		Resource\Build Support\CSProj Import\App.manifest = Resource\Build Support\CSProj Import\App.manifest
+		Source Code\AssemblyInfo.cs = Source Code\AssemblyInfo.cs
+		Resource\Build Support\CSProj Import\Common.csproj.import = Resource\Build Support\CSProj Import\Common.csproj.import
+		Resource\Build Support\CSProj Import\Library.csproj.import = Resource\Build Support\CSProj Import\Library.csproj.import
+		Resource\Build Support\CSProj Import\Module.csproj.import = Resource\Build Support\CSProj Import\Module.csproj.import
+		Source Code\NLog.config = Source Code\NLog.config
+		Resource\Build Support\CSProj Import\Variable.csproj.import = Resource\Build Support\CSProj Import\Variable.csproj.import
+		Resource\Build Support\CSProj Import\WinExe.csproj.import = Resource\Build Support\CSProj Import\WinExe.csproj.import
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Develop Support", "Develop Support", "{EDC1E8EE-2788-4249-A3A5-702B92F11F5D}"
+	ProjectSection(SolutionItems) = preProject
+		Document\Develop Support\Config XSD\nhibernate-configuration.xsd = Document\Develop Support\Config XSD\nhibernate-configuration.xsd
+		Document\Develop Support\Config XSD\nhibernate-mapping.xsd = Document\Develop Support\Config XSD\nhibernate-mapping.xsd
+		Document\Develop Support\Config XSD\NLog.xsd = Document\Develop Support\Config XSD\NLog.xsd
+		Document\Develop Support\Config XSD\Unity.xsd = Document\Develop Support\Config XSD\Unity.xsd
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding", "Source Code\UCanSoft.PortForwarding\UCanSoft.PortForwarding.csproj", "{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Debug|x64 = Debug|x64
+		Debug|x86 = Debug|x86
+		Release|Any CPU = Release|Any CPU
+		Release|x64 = Release|x64
+		Release|x86 = Release|x86
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.ActiveCfg = Debug|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.Build.0 = Debug|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.ActiveCfg = Debug|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.Build.0 = Debug|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.ActiveCfg = Release|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.Build.0 = Release|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.ActiveCfg = Release|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.Build.0 = Release|x86
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {5EA58DE2-8843-424C-AF91-DF7DF6F31CD5}
+	EndGlobalSection
+EndGlobal

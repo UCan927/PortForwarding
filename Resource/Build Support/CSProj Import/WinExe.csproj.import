@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(SolutionDir)Resource\Build Support\CSProj Import\Common.csproj.import" />
+  <PropertyGroup Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <ApplicationIcon>$(IconDir)\Logo.ico</ApplicationIcon>
+  </PropertyGroup>
+  <ItemGroup Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <None Include="$(CodeDir)\NLog.config">
+      <Link>Config\NLog.config</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <Content Include="$(ThirdLibDir)\Json.Net\Newtonsoft.Json.dll">
+      <Link>Libs\Newtonsoft.Json.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(ThirdLibDir)\NLog\NLog.dll">
+      <Link>Libs\NLog.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(ThirdLibDir)\Mina.NET\Common.Logging.Core.dll">
+      <Link>Libs\Common.Logging.Core.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(ThirdLibDir)\Mina.NET\Common.Logging.dll">
+      <Link>Libs\Common.Logging.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="$(ThirdLibDir)\Mina.NET\Mina.NET.dll">
+      <Link>Libs\Mina.NET.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+  <PropertyGroup Condition=" ('$(Configuration)' == 'Release') And ('$(OutputType)' == 'WinExe' Or '$(OutputType)' == 'Exe') ">
+    <ApplicationManifest>$(ImprotDir)\App.manifest</ApplicationManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <OutputPath>$(ExeOutputDir)</OutputPath>
+  </PropertyGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Target Name="BeforeBuild" Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <Exec Command="
+:: 清理Library与Modules目录
+if Exist &quot;$(OutputPath)Libs&quot; (Rd &quot;$(OutputPath)Libs&quot; /S /Q)
+if Exist &quot;$(OutputPath)Modules&quot; (Rd &quot;$(OutputPath)Modules&quot; /S /Q)
+          " />
+  </Target>
+  <Target Name="AfterBuild" Condition=" ('$(OutputType)' == 'WinExe') OR ('$(OutputType)' == 'Exe') ">
+    <Exec Command="
+:: 将Libs与Modules复制到主程序目录
+if Exist &quot;$(LibrariesOutputDir)&quot; (if not Exist &quot;$(OutputPath)Libs&quot; (Md &quot;$(OutputPath)Libs&quot;))
+if Exist &quot;$(ModulesOutputDir)&quot; (if not Exist &quot;$(OutputPath)Modules&quot; (Md &quot;$(OutputPath)Modules&quot;))
+if Exist &quot;$(LibrariesOutputDir)&quot; (XCopy &quot;$(LibrariesOutputDir)&quot; &quot;$(OutputPath)Libs&quot; /E /Y)
+if Exist &quot;$(ModulesOutputDir)&quot; (XCopy &quot;$(ModulesOutputDir)&quot; &quot;$(OutputPath)Modules&quot; /E /Y)
+
+:: 清理Libs与Modules目录
+if &quot;$(MSBuildProjectName)&quot; == &quot;$(MainProjectName)&quot; (if Exist &quot;$(LibrariesOutputDir)&quot; (Rd &quot;$(LibrariesOutputDir)&quot; /S /Q))
+if &quot;$(MSBuildProjectName)&quot; == &quot;$(MainProjectName)&quot; (if Exist &quot;$(ModulesOutputDir)&quot; (Rd &quot;$(ModulesOutputDir)&quot; /S /Q))
+          
+:: Release条件下，打包发布
+if not '$(Configuration)' == 'Release' exit
+
+if Exist &quot;$(PublishDir)&quot; (Rd &quot;$(PublishDir)&quot; /S /Q)
+Md &quot;$(PublishDir)&quot;
+
+:: 压缩主程序目录
+$(PackingTool) &quot;-PackingFolder:'$(OutputPath)'&quot; &quot;-AssemblyName:'$(AssemblyName)'&quot; &quot;-OutputFile:'$(PublishDir)$(MSBuildProjectName)-v${Version}.7z'&quot; &quot;-Timeout:'1.5'&quot; &quot;-WindowStyle:'Normal'&quot;
+
+:: 弹出发布目录
+start Explorer &quot;$(PublishDir)&quot;
+          " />
+  </Target>
+</Project>
