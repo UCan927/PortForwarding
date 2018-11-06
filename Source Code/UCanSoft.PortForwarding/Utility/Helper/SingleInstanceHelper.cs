@@ -5,10 +5,9 @@
     /// 单实例辅助类
     /// </summary>
     /// <typeparam name="T"></typeparam>
-    public class SingleInstanceHelper<T>
-        where T : SingleInstanceHelper<T>, new()
+    public class SingleInstanceHelper<T> : ISingleInstance
+        where T : ISingleInstance, new()
     {
-
         #region Field Define
         #endregion
 
@@ -30,10 +29,13 @@
         public static T Instance { get; private set; } = default(T);
         #endregion
 
-        /// <summary>
-        /// 初始化
-        /// </summary>
-        protected virtual void Init() { }
+        public virtual void Init()
+        { }
+    }
+
+    public interface ISingleInstance
+    {
+        void Init();
     }
     #endregion
 }
