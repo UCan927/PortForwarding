@@ -25,18 +25,14 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Develop Support", "Develop 
 		Document\Develop Support\Config XSD\Unity.xsd = Document\Develop Support\Config XSD\Unity.xsd
 	EndProjectSection
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding", "Source Code\UCanSoft.PortForwarding\UCanSoft.PortForwarding.csproj", "{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5431326A-D1D9-45B3-A747-F0F002D86B29} = {5431326A-D1D9-45B3-A747-F0F002D86B29}
-		{E7D0C2A5-EB80-4483-BCA4-01718C970012} = {E7D0C2A5-EB80-4483-BCA4-01718C970012}
-	EndProjectSection
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Tcp2Udp", "Source Code\UCanSoft.PortForwarding.Tcp2Udp\UCanSoft.PortForwarding.Tcp2Udp.csproj", "{E7D0C2A5-EB80-4483-BCA4-01718C970012}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Udp2Tcp", "Source Code\UCanSoft.PortForwarding.Udp2Tcp\UCanSoft.PortForwarding.Udp2Tcp.csproj", "{5431326A-D1D9-45B3-A747-F0F002D86B29}"
 	ProjectSection(ProjectDependencies) = postProject
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012} = {E7D0C2A5-EB80-4483-BCA4-01718C970012}
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Tcp2Tcp", "Source Code\UCanSoft.PortForwarding.Tcp2Tcp\UCanSoft.PortForwarding.Tcp2Tcp.csproj", "{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -48,18 +44,6 @@ Global
 		Release|x86 = Release|x86
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.ActiveCfg = Debug|x64
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.Build.0 = Debug|x64
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.ActiveCfg = Debug|x86
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.Build.0 = Debug|x86
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.ActiveCfg = Release|x64
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.Build.0 = Release|x64
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.ActiveCfg = Release|x86
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.Build.0 = Release|x86
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012}.Debug|x64.ActiveCfg = Debug|x64
@@ -84,14 +68,26 @@ Global
 		{5431326A-D1D9-45B3-A747-F0F002D86B29}.Release|x64.Build.0 = Release|x64
 		{5431326A-D1D9-45B3-A747-F0F002D86B29}.Release|x86.ActiveCfg = Release|x86
 		{5431326A-D1D9-45B3-A747-F0F002D86B29}.Release|x86.Build.0 = Release|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.ActiveCfg = Debug|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x64.Build.0 = Debug|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.ActiveCfg = Debug|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Debug|x86.Build.0 = Debug|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.ActiveCfg = Release|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.Build.0 = Release|x64
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.ActiveCfg = Release|x86
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 		{5431326A-D1D9-45B3-A747-F0F002D86B29} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
+		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5EA58DE2-8843-424C-AF91-DF7DF6F31CD5}

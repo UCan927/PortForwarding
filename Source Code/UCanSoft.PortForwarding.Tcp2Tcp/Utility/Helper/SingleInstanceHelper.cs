@@ -1,4 +1,4 @@
-﻿namespace UCanSoft.PortForwarding.Utility.Helper
+﻿namespace UCanSoft.PortForwarding.Tcp2Tcp.Utility.Helper
 {
     #region 单实例辅助类
     /// <summary>

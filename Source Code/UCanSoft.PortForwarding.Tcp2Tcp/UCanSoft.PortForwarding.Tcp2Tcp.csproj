@@ -7,8 +7,8 @@
     <ProjectGuid>{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>UCanSoft.PortForwarding</RootNamespace>
-    <AssemblyName>UCanSoft.PortForwarding</AssemblyName>
+    <RootNamespace>UCanSoft.PortForwarding.Tcp2Tcp</RootNamespace>
+    <AssemblyName>UCanSoft.PortForwarding.Tcp2Tcp</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>

@@ -7,10 +7,10 @@ using Mina.Transport.Socket;
 using System;
 using System.Configuration;
 using System.Net;
-using UCanSoft.PortForwarding.Codec;
-using UCanSoft.PortForwarding.Utility.Helper;
+using UCanSoft.PortForwarding.Tcp2Tcp.Codec;
+using UCanSoft.PortForwarding.Tcp2Tcp.Utility.Helper;
 
-namespace UCanSoft.PortForwarding.Core
+namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
 {
     class MessageHandler : SingleInstanceHelper<MessageHandler>, IoHandler
     {

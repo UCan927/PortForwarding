@@ -2,7 +2,7 @@
 using Mina.Core.Session;
 using Mina.Filter.Codec;
 
-namespace UCanSoft.PortForwarding.Codec
+namespace UCanSoft.PortForwarding.Tcp2Tcp.Codec
 {
     class Encoder : ProtocolEncoderAdapter
     {
