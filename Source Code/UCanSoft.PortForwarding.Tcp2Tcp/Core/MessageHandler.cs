@@ -12,7 +12,7 @@ using UCanSoft.PortForwarding.Common.Utility.Helper;
 
 namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
 {
-    class MessageHandler : SingleInstanceHelper<MessageHandler>, IoHandler
+    class MessageHandler : IoHandlerAdapter, ISingleInstance
     {
         private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(MessageHandler).FullName);
         private readonly AttributeKey _pipelineSessionKey = new AttributeKey(typeof(MessageHandler), "PipelineSessionKey");
@@ -26,11 +26,8 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
             if (Int32.TryParse(ConfigurationManager.AppSettings["ForwardingPort"], out Int32 forwardingPort))
                 _forwardingPort = forwardingPort;
         }
-
-        void IoHandler.SessionCreated(IoSession session)
-        { }
-
-        void IoHandler.SessionOpened(IoSession session)
+        
+        public override void SessionOpened(IoSession session)
         {
             _logger.Debug("已建立与[{0}]连接.", session.RemoteEndPoint);
             var pipeSession = session.GetAttribute<IoSession>(_pipelineSessionKey);
@@ -51,7 +48,7 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
             pipeSession.SetAttribute(_pipelineSessionKey, session);
         }
         
-        void IoHandler.MessageReceived(IoSession session, object message)
+        public override void MessageReceived(IoSession session, Object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
             if (!(message is IoBuffer buffer))
@@ -62,22 +59,20 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
             pipeSession.Write(buffer);
         }
 
-        void IoHandler.SessionClosed(IoSession session)
+        public override void SessionClosed(IoSession session)
         {
-            _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
             session.RemoveAttribute(_pipelineSessionKey);
+            _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
         }
 
-        void IoHandler.SessionIdle(IoSession session, IdleStatus status)
-        { }
+        public override void ExceptionCaught(IoSession session, Exception cause)
+        {
+            _logger.Error("与[{0}]交互数据时发生异常:\r\n{1}."
+                         , session.RemoteEndPoint
+                         , cause);
+        }
 
-        void IoHandler.ExceptionCaught(IoSession session, Exception cause)
-        { }
-
-        void IoHandler.MessageSent(IoSession session, object message)
-        { }
-
-        void IoHandler.InputClosed(IoSession session)
+        void ISingleInstance.Init()
         { }
     }
 }
