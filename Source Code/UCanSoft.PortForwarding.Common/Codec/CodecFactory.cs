@@ -1,9 +1,9 @@
 ﻿using Mina.Core.Session;
 using Mina.Filter.Codec;
 
-namespace UCanSoft.PortForwarding.Tcp2Tcp.Codec
+namespace UCanSoft.PortForwarding.Common.Codec
 {
-    class CodecFactory : IProtocolCodecFactory
+    public class CodecFactory : IProtocolCodecFactory
     {
         private readonly Encoder _encoder;
         private readonly Decoder _decoder;

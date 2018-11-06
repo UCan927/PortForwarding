@@ -7,8 +7,8 @@ using Mina.Transport.Socket;
 using System;
 using System.Configuration;
 using System.Net;
-using UCanSoft.PortForwarding.Udp2Tcp.Codec;
-using UCanSoft.PortForwarding.Udp2Tcp.Utility.Helper;
+using UCanSoft.PortForwarding.Common.Codec;
+using UCanSoft.PortForwarding.Common.Utility.Helper;
 
 namespace UCanSoft.PortForwarding.Udp2Tcp.Core
 {

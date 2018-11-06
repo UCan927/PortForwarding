@@ -33,6 +33,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Udp
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Tcp2Tcp", "Source Code\UCanSoft.PortForwarding.Tcp2Tcp\UCanSoft.PortForwarding.Tcp2Tcp.csproj", "{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}"
+	ProjectSection(ProjectDependencies) = postProject
+		{5431326A-D1D9-45B3-A747-F0F002D86B29} = {5431326A-D1D9-45B3-A747-F0F002D86B29}
+		{E7D0C2A5-EB80-4483-BCA4-01718C970012} = {E7D0C2A5-EB80-4483-BCA4-01718C970012}
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UCanSoft.PortForwarding.Common", "Source Code\UCanSoft.PortForwarding.Common\UCanSoft.PortForwarding.Common.csproj", "{51BEBE08-821B-45F8-9448-E133A94AD000}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -80,6 +86,18 @@ Global
 		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x64.Build.0 = Release|x64
 		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.ActiveCfg = Release|x86
 		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6}.Release|x86.Build.0 = Release|x86
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|x64.ActiveCfg = Debug|x64
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|x64.Build.0 = Debug|x64
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|x86.ActiveCfg = Debug|x86
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Debug|x86.Build.0 = Debug|x86
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|Any CPU.Build.0 = Release|Any CPU
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|x64.ActiveCfg = Release|x64
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|x64.Build.0 = Release|x64
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|x86.ActiveCfg = Release|x86
+		{51BEBE08-821B-45F8-9448-E133A94AD000}.Release|x86.Build.0 = Release|x86
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,6 +106,7 @@ Global
 		{E7D0C2A5-EB80-4483-BCA4-01718C970012} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 		{5431326A-D1D9-45B3-A747-F0F002D86B29} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 		{D3E2E310-CF8A-4CB2-BF14-7809AA5BBBA6} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
+		{51BEBE08-821B-45F8-9448-E133A94AD000} = {2EE7B669-2D03-4058-AC4A-BE131B05B68D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5EA58DE2-8843-424C-AF91-DF7DF6F31CD5}

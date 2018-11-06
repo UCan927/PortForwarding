@@ -72,7 +72,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="Mina.NET">
-      <HintPath>$(ThirdLibDir)\Mina.NET\NLog.dll</HintPath>
+      <HintPath>$(ThirdLibDir)\Mina.NET\Mina.NET.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>

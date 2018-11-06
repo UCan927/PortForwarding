@@ -13,16 +13,19 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Codec\CodecFactory.cs" />
-    <Compile Include="Codec\Decoder.cs" />
-    <Compile Include="Codec\Encoder.cs" />
     <Compile Include="Core\MessageHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Utility\Helper\SingleInstanceHelper.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\UCanSoft.PortForwarding.Common\UCanSoft.PortForwarding.Common.csproj">
+      <Project>{51bebe08-821b-45f8-9448-e133a94ad000}</Project>
+      <Name>UCanSoft.PortForwarding.Common</Name>
+      <Private>False</Private>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(SolutionDir)Resource\Build Support\CSProj Import\WinExe.csproj.import" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
