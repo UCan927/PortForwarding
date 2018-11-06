@@ -7,10 +7,10 @@ using Mina.Transport.Socket;
 using System;
 using System.Configuration;
 using System.Net;
-using UCanSoft.PortForwarding.Codec;
-using UCanSoft.PortForwarding.Utility.Helper;
+using UCanSoft.PortForwarding.Tcp2Udp.Codec;
+using UCanSoft.PortForwarding.Tcp2Udp.Utility.Helper;
 
-namespace UCanSoft.PortForwarding.Core
+namespace UCanSoft.PortForwarding.Tcp2Udp.Core
 {
     class MessageHandler : SingleInstanceHelper<MessageHandler>, IoHandler
     {
@@ -50,7 +50,7 @@ namespace UCanSoft.PortForwarding.Core
             session.SetAttribute(_pipelineSessionKey, pipeSession);
             pipeSession.SetAttribute(_pipelineSessionKey, session);
         }
-        
+
         void IoHandler.MessageReceived(IoSession session, object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);

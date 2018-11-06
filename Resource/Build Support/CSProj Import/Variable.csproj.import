@@ -6,7 +6,7 @@
     <CodeDir>$(SolutionDir)Source Code</CodeDir>
     <IconDir>$(SolutionDir)Resource\Icon</IconDir>
     <ResourceDir>$(SolutionDir)Resource</ResourceDir>
-    <MainProjectName></MainProjectName>
+    <MainProjectName>UCanSoft.PortForwarding</MainProjectName>
     <ThirdLibDir>$(SolutionDir)Resource\3rdLib</ThirdLibDir>
     <PublishDir>$(SolutionDir)Bin\Publish\$(MSBuildProjectName)</PublishDir>
     <ImprotDir>$(SolutionDir)Resource\Build Support\CSProj Import</ImprotDir>
