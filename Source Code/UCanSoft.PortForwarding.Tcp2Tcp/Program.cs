@@ -1,4 +1,5 @@
-﻿using Mina.Filter.Codec;
+﻿using Mina.Core.Service;
+using Mina.Filter.Codec;
 using Mina.Transport.Socket;
 using System;
 using System.Configuration;
@@ -24,7 +25,7 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp
             var port = Int32.Parse(ConfigurationManager.AppSettings["ListenPort"]);
             var host = new IPEndPoint(ip, port);
 
-            AsyncSocketAcceptor acceptor = new AsyncSocketAcceptor();
+            IoAcceptor acceptor = new AsyncSocketAcceptor();
             acceptor.FilterChain.AddFirst("codec", new ProtocolCodecFilter(new CodecFactory()));
             acceptor.Handler = SingleInstanceHelper<MessageHandler>.Instance;
 

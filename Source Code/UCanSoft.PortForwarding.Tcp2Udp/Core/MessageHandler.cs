@@ -39,7 +39,7 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
                 || forwardingPort <= 0
                 || remoteHost == $"{forwardingHost}:{forwardingPort}")
                 return;
-            IoConnector connector = new AsyncSocketConnector();
+            IoConnector connector = new AsyncDatagramConnector();
             connector.FilterChain.AddLast("codec", new ProtocolCodecFilter(new CodecFactory()));
             connector.Handler = SingleInstanceHelper<MessageHandler>.Instance;
             IConnectFuture future = connector.Connect(new IPEndPoint(forwardingHost, forwardingPort)).Await();
