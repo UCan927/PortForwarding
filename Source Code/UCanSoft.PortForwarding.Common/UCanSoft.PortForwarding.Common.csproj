@@ -12,10 +12,16 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Codec\Datagram\DatagramDecoder.cs" />
+    <Compile Include="Codec\Datagram\DatagramEncoder.cs" />
+    <Compile Include="Codec\Datagram\DatagramCodecFactory.cs" />
+    <Compile Include="Codec\Datagram\DatagramModel.cs" />
     <Compile Include="Codec\Direct\DirectCodecFactory.cs" />
     <Compile Include="Codec\Direct\DirectDecoder.cs" />
     <Compile Include="Codec\Direct\DirectEncoder.cs" />
+    <Compile Include="Extended\GeneralExtended.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Utility\Algorithms\Cryptography.cs" />
     <Compile Include="Utility\Helper\SingleInstanceHelper.cs" />
   </ItemGroup>
   <ItemGroup />
