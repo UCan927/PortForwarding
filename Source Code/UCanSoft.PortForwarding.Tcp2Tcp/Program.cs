@@ -27,7 +27,7 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp
 
             IoAcceptor acceptor = new AsyncSocketAcceptor();
             acceptor.FilterChain.AddFirst("codec", new ProtocolCodecFilter(new CodecFactory()));
-            acceptor.Handler = SingleInstanceHelper<MessageHandler>.Instance;
+            acceptor.Handler = SingleInstanceHelper<AcceptorHandler>.Instance;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("按S键启动监听;");

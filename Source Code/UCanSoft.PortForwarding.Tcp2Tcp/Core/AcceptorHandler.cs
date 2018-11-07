@@ -12,42 +12,40 @@ using UCanSoft.PortForwarding.Common.Utility.Helper;
 
 namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
 {
-    class MessageHandler : IoHandlerAdapter, ISingleInstance
+    class AcceptorHandler : IoHandlerAdapter, ISingleInstance
     {
-        private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(MessageHandler).FullName);
-        private readonly AttributeKey _pipelineSessionKey = new AttributeKey(typeof(MessageHandler), "PipelineSessionKey");
+        private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(AcceptorHandler).FullName);
+        private readonly AttributeKey _pipelineSessionKey = new AttributeKey(typeof(AcceptorHandler), "PipelineSessionKey");
         private readonly IPAddress _forwardingHost = null;
         private readonly Int32? _forwardingPort = null;
 
-        public MessageHandler()
+        public AcceptorHandler()
         {
             if (!IPAddress.TryParse(ConfigurationManager.AppSettings["ForwardingHost"], out _forwardingHost))
                 return;
             if (Int32.TryParse(ConfigurationManager.AppSettings["ForwardingPort"], out Int32 forwardingPort))
                 _forwardingPort = forwardingPort;
         }
-        
+
         public override void SessionOpened(IoSession session)
         {
             _logger.Debug("已建立与[{0}]连接.", session.RemoteEndPoint);
-            var pipeSession = session.GetAttribute<IoSession>(_pipelineSessionKey);
             var forwardingHost = _forwardingHost;
             var forwardingPort = _forwardingPort ?? -1024;
             var remoteHost = session.RemoteEndPoint.ToString();
-            if (pipeSession != null
-                || forwardingHost == null
-                || forwardingPort <= 0
-                || remoteHost == $"{forwardingHost}:{forwardingPort}")
+            if (forwardingHost == null
+                || forwardingPort <= 0)
                 return;
+            var connectorHandler = SingleInstanceHelper<ConnectorHandler>.Instance;
             IoConnector connector = new AsyncSocketConnector();
             connector.FilterChain.AddLast("codec", new ProtocolCodecFilter(new CodecFactory()));
-            connector.Handler = SingleInstanceHelper<MessageHandler>.Instance;
+            connector.Handler = connectorHandler;
             IConnectFuture future = connector.Connect(new IPEndPoint(forwardingHost, forwardingPort)).Await();
-            pipeSession = future.Session;
+            var pipeSession = future.Session;
             session.SetAttribute(_pipelineSessionKey, pipeSession);
-            pipeSession.SetAttribute(_pipelineSessionKey, session);
+            pipeSession.SetAttribute(connectorHandler.PipelineSessionKey, session);
         }
-        
+
         public override void MessageReceived(IoSession session, Object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
