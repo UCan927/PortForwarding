@@ -11,11 +11,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Direct
             var remaining = input.Remaining;
             if (remaining <= 0)
                 return;
-            IoBuffer buffer = IoBuffer.Allocate(remaining);
-            buffer.AutoExpand = true;
-            buffer.Put(input);
-            buffer.Flip();
-            output.Write(buffer);
+            var bytes = input.GetRemaining();
+            input.Skip(remaining);
+            output.Write(bytes);
         }
     }
 }
