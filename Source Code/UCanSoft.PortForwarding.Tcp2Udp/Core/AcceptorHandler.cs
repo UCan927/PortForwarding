@@ -49,12 +49,13 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
         public override void MessageReceived(IoSession session, Object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
-            if (!(message is IoBuffer buffer))
+            if (!(message is ArraySegment<Byte> bytes))
                 return;
             var pipeSession = session.GetAttribute<IoSession>(_pipelineSessionKey);
             if (pipeSession == null)
                 return;
-            pipeSession.Write(buffer);
+            
+            pipeSession.Write(bytes);
         }
 
         public override void SessionClosed(IoSession session)

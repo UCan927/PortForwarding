@@ -1,6 +1,6 @@
-﻿using Mina.Core.Buffer;
-using Mina.Core.Session;
+﻿using Mina.Core.Session;
 using Mina.Filter.Codec;
+using System;
 
 namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 {
@@ -8,10 +8,11 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
     {
         public override void Encode(IoSession session, object message, IProtocolEncoderOutput output)
         {
-            if (!(message is IoBuffer buffer)
-                || buffer.Remaining <= 0)
+            if (!(message is DatagramModel model))
                 return;
+            var buffer = model.ToIoBuffer();
             output.Write(buffer);
+            model.LastTrySendTime = DateTime.Now;
         }
     }
 }

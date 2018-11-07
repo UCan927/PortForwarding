@@ -33,15 +33,29 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         public static readonly Int32 DatagramIndex = DatagramLengthIndex + DatagramLengthLength;
         public static readonly Int32 MaxDatagramLength = 1000;
         public static readonly Int32 HeaderLength = HeaderFlagLength + DatagramTypeLength + DatagramIdLength + DatagramMD5Length + DatagramLengthLength;
+        private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(5.0D);
 
         private Byte[] _buffer = null;
 
         public String HeaderFlag { get; private set; }
         public DatagramTypeEnum Type { get; private set; }
-        public UInt64 Id { get; private set; }
+        public Int64 Id { get; private set; }
         public String ShorMd5 { get; private set; } 
         public UInt16 DatagramLength { get { return (UInt16)Datagram.Count; } }
-        
+        public DateTime? LastTrySendTime { get; set; } = null;
+        public TimeSpan Cooldown { get { return GetCooldown(); } }
+
+        private TimeSpan GetCooldown()
+        {
+            TimeSpan retVal = TimeSpan.Zero;
+            var lastSendTime = LastTrySendTime ?? DateTime.MinValue;
+            var interval = DateTime.Now - lastSendTime;
+            if (interval >= _cooldown)
+                return retVal;
+            retVal = _cooldown - interval;
+            return retVal;
+        }
+
         public ReadOnlyCollection<Byte> Datagram { get; private set; }
 
         private DatagramModel()
@@ -62,7 +76,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 if (retVal.HeaderFlag != ConstHeaderFlag)
                     throw new BadImageFormatException("数据包包头不匹配.");
                 retVal.Type = (DatagramTypeEnum)bytes[DatagramTyepIndex];
-                retVal.Id = BitConverter.ToUInt64(bytes, DatagramIdIndex);
+                retVal.Id = BitConverter.ToInt64(bytes, DatagramIdIndex);
                 var shortMd5Bytes = new Byte[DatagramMD5Length];
                 Array.Copy(bytes, DatagramMD5Index, shortMd5Bytes, 0, DatagramMD5Length);
                 retVal.ShorMd5 = BitConverter.ToString(shortMd5Bytes).Replace("-", String.Empty);
@@ -85,7 +99,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
-        public static DatagramModel Create(UInt64 id, Byte[] buffer)
+        public static DatagramModel Create(Int64 id, Byte[] buffer)
         {
             buffer = buffer ?? new Byte[0];
             if (buffer.Length > MaxDatagramLength)
@@ -101,7 +115,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
-        public static DatagramModel Create(UInt64 id, UInt64 ackId, DatagramTypeEnum type)
+        public static DatagramModel Create(Int64 id, Int64 ackId, DatagramTypeEnum type)
         {
             if (type != DatagramTypeEnum.ACK
                 && type != DatagramTypeEnum.SYNACK)
@@ -120,11 +134,12 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 
         public IoBuffer ToIoBuffer()
         {
-            IoBuffer retVal = IoBuffer.Allocate(HeaderLength + this.DatagramLength);
+            IoBuffer retVal = null;
             if (_buffer != null)
-                retVal.Put(_buffer);
+                retVal = IoBuffer.Wrap(_buffer);
             else
             {
+                retVal = IoBuffer.Allocate(HeaderLength + this.DatagramLength);
                 var buffer = Encoding.ASCII.GetBytes(this.HeaderFlag);
                 retVal.Put(buffer);
                 retVal.Put((Byte)this.Type);
@@ -137,10 +152,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 retVal.Flip();
                 _buffer = retVal.GetRemaining().Array;
             }
-            retVal.Flip();
             return retVal;
         }
-
+        
         private static String GetShorMd5(Byte[] buffer)
         {
             String retVal = null;
