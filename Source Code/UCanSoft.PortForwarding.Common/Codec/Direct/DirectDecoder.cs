@@ -2,9 +2,9 @@
 using Mina.Core.Session;
 using Mina.Filter.Codec;
 
-namespace UCanSoft.PortForwarding.Common.Codec
+namespace UCanSoft.PortForwarding.Common.Codec.Direct
 {
-    public class Decoder : ProtocolDecoderAdapter
+    public class DirectDecoder : ProtocolDecoderAdapter
     {
         public override void Decode(IoSession session, IoBuffer input, IProtocolDecoderOutput output)
         {

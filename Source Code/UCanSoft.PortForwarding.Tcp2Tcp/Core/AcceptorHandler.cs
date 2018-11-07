@@ -7,7 +7,7 @@ using Mina.Transport.Socket;
 using System;
 using System.Configuration;
 using System.Net;
-using UCanSoft.PortForwarding.Common.Codec;
+using UCanSoft.PortForwarding.Common.Codec.Direct;
 using UCanSoft.PortForwarding.Common.Utility.Helper;
 
 namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
@@ -38,7 +38,7 @@ namespace UCanSoft.PortForwarding.Tcp2Tcp.Core
                 return;
             var connectorHandler = SingleInstanceHelper<ConnectorHandler>.Instance;
             IoConnector connector = new AsyncSocketConnector();
-            connector.FilterChain.AddLast("codec", new ProtocolCodecFilter(new CodecFactory()));
+            connector.FilterChain.AddLast("codec", new ProtocolCodecFilter(new DirectCodecFactory()));
             connector.Handler = connectorHandler;
             IConnectFuture future = connector.Connect(new IPEndPoint(forwardingHost, forwardingPort)).Await();
             var pipeSession = future.Session;

@@ -12,9 +12,9 @@
     <FileAlignment>512</FileAlignment>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Codec\CodecFactory.cs" />
-    <Compile Include="Codec\Decoder.cs" />
-    <Compile Include="Codec\Encoder.cs" />
+    <Compile Include="Codec\Direct\DirectCodecFactory.cs" />
+    <Compile Include="Codec\Direct\DirectDecoder.cs" />
+    <Compile Include="Codec\Direct\DirectEncoder.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Utility\Helper\SingleInstanceHelper.cs" />
   </ItemGroup>

@@ -1,17 +1,17 @@
 ﻿using Mina.Core.Session;
 using Mina.Filter.Codec;
 
-namespace UCanSoft.PortForwarding.Common.Codec
+namespace UCanSoft.PortForwarding.Common.Codec.Direct
 {
-    public class CodecFactory : IProtocolCodecFactory
+    public class DirectCodecFactory : IProtocolCodecFactory
     {
-        private readonly Encoder _encoder;
-        private readonly Decoder _decoder;
+        private readonly DirectEncoder _encoder;
+        private readonly DirectDecoder _decoder;
 
-        public CodecFactory()
+        public DirectCodecFactory()
         {
-            _encoder = new Encoder();
-            _decoder = new Decoder();
+            _encoder = new DirectEncoder();
+            _decoder = new DirectDecoder();
         }
 
         IProtocolEncoder IProtocolCodecFactory.GetEncoder(IoSession session)
