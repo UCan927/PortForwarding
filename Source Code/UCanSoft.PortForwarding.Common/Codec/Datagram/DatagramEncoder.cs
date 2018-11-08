@@ -12,7 +12,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 return;
             var buffer = model.ToIoBuffer();
             output.Write(buffer);
-            model.LastTrySendTime = DateTime.Now;
+            model.LastSendTime = DateTime.Now;
         }
     }
 }

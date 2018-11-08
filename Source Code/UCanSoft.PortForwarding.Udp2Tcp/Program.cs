@@ -4,7 +4,7 @@ using Mina.Transport.Socket;
 using System;
 using System.Configuration;
 using System.Net;
-using UCanSoft.PortForwarding.Common.Codec.Direct;
+using UCanSoft.PortForwarding.Common.Codec.Datagram;
 using UCanSoft.PortForwarding.Common.Utility.Helper;
 using UCanSoft.PortForwarding.Udp2Tcp.Core;
 
@@ -26,8 +26,8 @@ namespace UCanSoft.PortForwarding.Udp2Tcp
             var host = new IPEndPoint(ip, port);
 
             IoAcceptor acceptor = new AsyncDatagramAcceptor();
-            acceptor.FilterChain.AddFirst("codec", new ProtocolCodecFilter(new DirectCodecFactory()));
-            acceptor.Handler = SingleInstanceHelper<MessageHandler>.Instance;
+            acceptor.FilterChain.AddFirst("codec", new ProtocolCodecFilter(new DatagramCodecFactory()));
+            acceptor.Handler = SingleInstanceHelper<AcceptorHandler>.Instance;
 
             Console.ForegroundColor = ConsoleColor.Green;
             Console.WriteLine("按S键启动监听;");

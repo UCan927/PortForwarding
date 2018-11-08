@@ -13,7 +13,8 @@
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="Core\MessageHandler.cs" />
+    <Compile Include="Core\AcceptorHandler.cs" />
+    <Compile Include="Core\ConnectorHandler.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>

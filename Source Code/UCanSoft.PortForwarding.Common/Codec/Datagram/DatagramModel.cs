@@ -36,19 +36,20 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(5.0D);
 
         private Byte[] _buffer = null;
+        private Int64? _ackId = null;
 
         public String HeaderFlag { get; private set; }
         public DatagramTypeEnum Type { get; private set; }
         public Int64 Id { get; private set; }
         public String ShorMd5 { get; private set; } 
         public UInt16 DatagramLength { get { return (UInt16)Datagram.Count; } }
-        public DateTime? LastTrySendTime { get; set; } = null;
+        public DateTime? LastSendTime { get; set; } = null;
         public TimeSpan Cooldown { get { return GetCooldown(); } }
 
         private TimeSpan GetCooldown()
         {
             TimeSpan retVal = TimeSpan.Zero;
-            var lastSendTime = LastTrySendTime ?? DateTime.MinValue;
+            var lastSendTime = LastSendTime ?? DateTime.MinValue;
             var interval = DateTime.Now - lastSendTime;
             if (interval >= _cooldown)
                 return retVal;
@@ -91,6 +92,13 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 if (_checkData && realShorMd5 != retVal.ShorMd5)
                     throw new BadImageFormatException("MD5效验失败!");
                 retVal.Datagram = new ReadOnlyCollection<Byte>(datagram);
+                if ((retVal.Type == DatagramTypeEnum.SYNACK
+                    || retVal.Type == DatagramTypeEnum.ACK)
+                    && retVal.DatagramLength == sizeof(Int64))
+                {
+                    var ackId = BitConverter.ToInt64(datagram, 0);
+                    retVal._ackId = ackId;
+                }
             }
             finally
             {
@@ -127,7 +135,8 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 Type = type,
                 Id = id,
                 ShorMd5 = GetShorMd5(buffer),
-                Datagram = new ReadOnlyCollection<Byte>(buffer)
+                Datagram = new ReadOnlyCollection<Byte>(buffer),
+                _ackId = ackId
             };
             return retVal;
         }
@@ -152,6 +161,17 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 retVal.Flip();
                 _buffer = retVal.GetRemaining().Array;
             }
+            return retVal;
+        }
+
+        public Boolean TryGetAckId(out Int64 ackId)
+        {
+            Boolean retVal = false;
+            ackId = 0L;
+            if (!this._ackId.HasValue)
+                return retVal;
+            retVal = true;
+            ackId = this._ackId.Value;
             return retVal;
         }
         
