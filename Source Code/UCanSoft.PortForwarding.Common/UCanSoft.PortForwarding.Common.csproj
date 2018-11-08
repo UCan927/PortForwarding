@@ -16,6 +16,7 @@
     <Compile Include="Codec\Datagram\DatagramEncoder.cs" />
     <Compile Include="Codec\Datagram\DatagramCodecFactory.cs" />
     <Compile Include="Codec\Datagram\DatagramModel.cs" />
+    <Compile Include="Codec\Datagram\SessionContext.cs" />
     <Compile Include="Codec\Direct\DirectCodecFactory.cs" />
     <Compile Include="Codec\Direct\DirectDecoder.cs" />
     <Compile Include="Codec\Direct\DirectEncoder.cs" />
