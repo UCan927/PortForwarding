@@ -18,12 +18,18 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             private readonly CancellationTokenSource _cts = new CancellationTokenSource();
             private readonly ConcurrentQueue<Int64> datagramQueue = new ConcurrentQueue<Int64>();
             private readonly ConcurrentDictionary<Int64, DatagramModel> datagrams = new ConcurrentDictionary<Int64, DatagramModel>();
+            private readonly ConcurrentQueue<Int64> synAckQueue = new ConcurrentQueue<Int64>();
+            private readonly ConcurrentDictionary<Int64, DatagramModel> synAcks = new ConcurrentDictionary<Int64, DatagramModel>();
+            private readonly ConcurrentDictionary<Int64, DatagramModel> datagramsUseModelId = new ConcurrentDictionary<Int64, DatagramModel>();
+            private readonly ConcurrentDictionary<Int64, DatagramModel> datagramsUseSynAckId = new ConcurrentDictionary<Int64, DatagramModel>();
             private readonly IoSession _session = null;
             private readonly ManualResetEventSlim _mEvt = new ManualResetEventSlim(false);
             private readonly SpinWait _spin = new SpinWait();
             private Int64 _idGenerator = 0L;
             private Task _sendDatagramTask;
-            private Int32 _isSending = 0;
+            private Task _sendSynAckTask;
+            private Int32 _isSendingSynAck = 0;
+            private Int32 _isSendingDatagram = 0;
 
             public Context(IoSession session)
             {
@@ -32,18 +38,37 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
 
             public void Enqueue(ArraySegment<Byte> bytes)
             {
-                foreach(var buffer in Slice(bytes))
+                foreach (var buffer in Slice(bytes))
                 {
                     var id = GenerateId();
                     var model = DatagramModel.Create(id, bytes.Array);
                     datagramQueue.Enqueue(id);
                     datagrams.TryAdd(id, model);
                 }
-                if (Interlocked.CompareExchange(ref _isSending, 1, 0) == 1)
+                if (Interlocked.CompareExchange(ref _isSendingDatagram, 1, 0) == 1)
                     return;
                 var token = _cts.Token;
                 _sendDatagramTask = Task.Delay(TimeSpan.FromSeconds(1.0D), token)
                                         .ContinueWith((t) => SendDatagram(token));
+            }
+
+            public void HandleSYN(DatagramModel model)
+            {
+                if (model.Type != DatagramModel.DatagramTypeEnum.SYN)
+                    return;
+                if (datagramsUseModelId.ContainsKey(model.Id))
+                    return;
+                var id = GenerateId();
+                var synAckModel = DatagramModel.Create(id, model.Id, DatagramModel.DatagramTypeEnum.SYNACK);
+                synAckQueue.Enqueue(id);
+                synAcks.TryAdd(id, synAckModel);
+                datagramsUseModelId.TryAdd(model.Id, model);
+                datagramsUseSynAckId.TryAdd(id, model);
+                if (Interlocked.CompareExchange(ref _isSendingSynAck, 1, 0) == 1)
+                    return;
+                var token = _cts.Token;
+                _sendSynAckTask = Task.Delay(TimeSpan.FromSeconds(1.0D), token)
+                                      .ContinueWith((t) => SendSynAck(token));
             }
 
             public void HandleSynAck(DatagramModel model)
@@ -63,22 +88,25 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
                 datagrams.TryRemove(datagramId, out DatagramModel datagram);
             }
 
-            private IEnumerable<Byte[]> Slice(ArraySegment<Byte> bytes)
+            public void HandleACK(DatagramModel model)
             {
-                if (bytes.Count <= DatagramModel.MaxDatagramLength)
-                    yield return bytes.Array;
-                else
+                if (model.Type != DatagramModel.DatagramTypeEnum.ACK)
+                    return;
+                if (!model.TryGetAckId(out Int64 modelAckId))
+                    throw new FormatException("ACK数据包格式不正确.");
+                if (synAckQueue.TryDequeue(out Int64 ackId)
+                    && ackId != modelAckId)
+                    throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
+                synAcks.TryRemove(ackId, out DatagramModel synAckModel);
+                if (datagramsUseSynAckId.TryRemove(ackId, out DatagramModel datagram)
+                    && datagram != null)
                 {
-                    Byte[] retVal = new Byte[DatagramModel.MaxDatagramLength];
-                    var buffer = IoBuffer.Wrap(bytes.Array);
-                    while (buffer.HasRemaining)
-                    {
-                        var remaining = buffer.Remaining;
-                        if (remaining <= DatagramModel.MaxDatagramLength)
-                            retVal = new Byte[remaining];
-                        buffer.Get(retVal, 0, retVal.Length);
-                        yield return retVal;
-                    }
+                    datagramsUseModelId.TryRemove(datagram.Id, out DatagramModel tmpDatagram);
+                    var pipeSession = _session?.GetAttribute<IoSession>(SingleInstanceHelper<ConnectorHandler>.Instance.PipelineSessionKey);
+                    if (pipeSession == null)
+                        return;
+                    var slice = datagram.ToIoBuffer().GetSlice(DatagramModel.HeaderLength, datagram.DatagramLength);
+                    pipeSession.Write(slice.GetRemaining());
                 }
             }
 
@@ -109,6 +137,53 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
                 }, token);
             }
 
+            private void SendSynAck(CancellationToken token)
+            {
+                _sendSynAckTask = _sendSynAckTask.ContinueWith((t) =>
+                {
+                    TimeSpan cooldown = TimeSpan.Zero;
+                    try
+                    {
+                        if (!synAckQueue.TryPeek(out Int64 id))
+                            return;
+                        if (!synAcks.TryGetValue(id, out DatagramModel model)
+                            || model == null)
+                            return;
+                        cooldown = model.Cooldown;
+                        if (cooldown != TimeSpan.Zero)
+                            return;
+                        _session.Write(model);
+                    }
+                    finally
+                    {
+                        if (cooldown != TimeSpan.Zero)
+                            _mEvt.Wait(cooldown, token);
+                        else
+                            _spin.SpinOnce();
+                        SendSynAck(token);
+                    }
+                }, token);
+            }
+
+            private IEnumerable<Byte[]> Slice(ArraySegment<Byte> bytes)
+            {
+                if (bytes.Count <= DatagramModel.MaxDatagramLength)
+                    yield return bytes.Array;
+                else
+                {
+                    Byte[] retVal = new Byte[DatagramModel.MaxDatagramLength];
+                    var buffer = IoBuffer.Wrap(bytes.Array);
+                    while (buffer.HasRemaining)
+                    {
+                        var remaining = buffer.Remaining;
+                        if (remaining <= DatagramModel.MaxDatagramLength)
+                            retVal = new Byte[remaining];
+                        buffer.Get(retVal, 0, retVal.Length);
+                        yield return retVal;
+                    }
+                }
+            }
+
             private Int64 GenerateId()
             {
                 return Interlocked.Increment(ref _idGenerator);
@@ -134,7 +209,10 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             if (pipeSession == null)
                 return;
             if (model.Type == DatagramModel.DatagramTypeEnum.SYN)
-            { }
+            {
+                var context = this.GetSessionContext(session);
+                context.HandleSYN(model);
+            }
             else if (model.Type == DatagramModel.DatagramTypeEnum.SYNACK)
             {
                 var context = this.GetSessionContext(session);
@@ -142,7 +220,8 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             }
             else if (model.Type == DatagramModel.DatagramTypeEnum.ACK)
             {
-
+                var context = this.GetSessionContext(session);
+                context.HandleACK(model);
             }
         }
 

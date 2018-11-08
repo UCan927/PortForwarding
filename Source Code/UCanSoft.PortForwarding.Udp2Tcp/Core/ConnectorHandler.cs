@@ -110,19 +110,13 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
         public override void MessageReceived(IoSession session, Object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
-            if (!(message is DatagramModel model))
+            if (!(message is ArraySegment<Byte> bytes))
                 return;
             var pipeSession = session.GetAttribute<IoSession>(PipelineSessionKey);
             if (pipeSession == null)
                 return;
-            if (model.Type == DatagramModel.DatagramTypeEnum.SYN)
-            { }
-            else if (model.Type == DatagramModel.DatagramTypeEnum.SYNACK)
-            { }
-            else if (model.Type == DatagramModel.DatagramTypeEnum.ACK)
-            {
-
-            }
+            var context = SingleInstanceHelper<AcceptorHandler>.Instance.GetSessionContext(pipeSession);
+            context.Enqueue(bytes);
         }
 
         public override void SessionClosed(IoSession session)
