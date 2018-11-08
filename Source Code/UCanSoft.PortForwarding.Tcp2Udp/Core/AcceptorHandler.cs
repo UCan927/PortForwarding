@@ -16,9 +16,9 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
     class AcceptorHandler : IoHandlerAdapter, ISingleInstance
     {
         private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(AcceptorHandler).FullName);
-        private readonly AttributeKey _pipelineSessionKey = new AttributeKey(typeof(AcceptorHandler), "PipelineSessionKey");
         private readonly IPAddress _forwardingHost = null;
         private readonly Int32? _forwardingPort = null;
+        public AttributeKey PipelineSessionKey { get; } = new AttributeKey(typeof(AcceptorHandler), "PipelineSessionKey");
 
         public AcceptorHandler()
         {
@@ -42,7 +42,7 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             connector.Handler = connectorHandler;
             IConnectFuture future = connector.Connect(new IPEndPoint(forwardingHost, forwardingPort)).Await();
             var pipeSession = future.Session;
-            session.SetAttribute(_pipelineSessionKey, pipeSession);
+            session.SetAttribute(PipelineSessionKey, pipeSession);
             pipeSession.SetAttribute(connectorHandler.PipelineSessionKey, session);
         }
 
@@ -51,16 +51,16 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
             if (!(message is ArraySegment<Byte> bytes))
                 return;
-            var pipeSession = session.GetAttribute<IoSession>(_pipelineSessionKey);
+            var pipeSession = session.GetAttribute<IoSession>(PipelineSessionKey);
             if (pipeSession == null)
                 return;
-            
-            pipeSession.Write(bytes);
+            var context = SingleInstanceHelper<ConnectorHandler>.Instance.GetSessionContext(pipeSession);
+            context.Enqueue(bytes);
         }
 
         public override void SessionClosed(IoSession session)
         {
-            session.RemoveAttribute(_pipelineSessionKey);
+            session.RemoveAttribute(PipelineSessionKey);
             _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
         }
 

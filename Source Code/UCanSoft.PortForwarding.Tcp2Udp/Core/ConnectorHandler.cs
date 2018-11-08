@@ -46,6 +46,23 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
                                         .ContinueWith((t) => SendDatagram(token));
             }
 
+            public void HandleSynAck(DatagramModel model)
+            {
+                if (model.Type != DatagramModel.DatagramTypeEnum.SYNACK)
+                    return;
+                var id = GenerateId();
+                var ackModel = DatagramModel.Create(id, model.Id, DatagramModel.DatagramTypeEnum.ACK);
+                _session.Write(ackModel);
+                if (!model.TryGetAckId(out Int64 modelAckId))
+                    throw new FormatException("ACK数据包格式不正确.");
+                if (!datagrams.ContainsKey(modelAckId))
+                    return;
+                if (datagramQueue.TryDequeue(out Int64 datagramId)
+                    && datagramId != modelAckId)
+                    throw new FormatException("ACK数据包Id与Datagram队列不匹配.");
+                datagrams.TryRemove(datagramId, out DatagramModel datagram);
+            }
+
             private IEnumerable<Byte[]> Slice(ArraySegment<Byte> bytes)
             {
                 if (bytes.Count <= DatagramModel.MaxDatagramLength)
@@ -99,8 +116,9 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
         }
 
         private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(ConnectorHandler).FullName);
-
         public AttributeKey PipelineSessionKey { get; } = new AttributeKey(typeof(ConnectorHandler), "PipelineSessionKey");
+        public AttributeKey ContextKey { get; } = new AttributeKey(typeof(ConnectorHandler), "ContextKey");
+
 
         public override void SessionOpened(IoSession session)
         {
@@ -118,7 +136,10 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             if (model.Type == DatagramModel.DatagramTypeEnum.SYN)
             { }
             else if (model.Type == DatagramModel.DatagramTypeEnum.SYNACK)
-            { }
+            {
+                var context = this.GetSessionContext(session);
+                context.HandleSynAck(model);
+            }
             else if (model.Type == DatagramModel.DatagramTypeEnum.ACK)
             {
 
@@ -136,6 +157,18 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
             _logger.Error("与[{0}]交互数据时发生异常:\r\n{1}."
                          , session.RemoteEndPoint
                          , cause);
+        }
+
+        public Context GetSessionContext(IoSession session)
+        {
+            AttributeKey key = ContextKey;
+            var retVal = session?.GetAttribute<Context>(key);
+            if (retVal == null)
+            {
+                retVal = new Context(session);
+                session?.SetAttribute(key, retVal);
+            }
+            return retVal;
         }
 
         void ISingleInstance.Init()

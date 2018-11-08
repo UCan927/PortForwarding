@@ -1,12 +1,10 @@
-﻿using Mina.Core.Buffer;
-using Mina.Core.Future;
+﻿using Mina.Core.Future;
 using Mina.Core.Service;
 using Mina.Core.Session;
 using Mina.Filter.Codec;
 using Mina.Transport.Socket;
 using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Net;
 using System.Threading;
@@ -38,8 +36,10 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
                 _session = session;
             }
 
-            public void Enqueue(DatagramModel model)
+            public void HandleSYN(DatagramModel model)
             {
+                if (model.Type != DatagramModel.DatagramTypeEnum.SYN)
+                    return;
                 if (datagramsUseModelId.ContainsKey(model.Id))
                     return;
                 var id = GenerateId();
@@ -52,10 +52,32 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
                     return;
                 var token = _cts.Token;
                 _sendDatagramTask = Task.Delay(TimeSpan.FromSeconds(1.0D), token)
-                                        .ContinueWith((t) => SendDatagram(token));
+                                        .ContinueWith((t) => SendSynAck(token));
             }
 
-            private void SendDatagram(CancellationToken token)
+            public void HandleACK(DatagramModel model)
+            {
+                if (model.Type != DatagramModel.DatagramTypeEnum.ACK)
+                    return;
+                if (!model.TryGetAckId(out Int64 modelAckId))
+                    throw new FormatException("ACK数据包格式不正确.");
+                if (synAckQueue.TryDequeue(out Int64 ackId)
+                    && ackId != modelAckId)
+                    throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
+                synAcks.TryRemove(ackId, out DatagramModel synAckModel);
+                if (datagramsUseSynAckId.TryRemove(ackId, out DatagramModel datagram)
+                    && datagram != null)
+                {
+                    datagramsUseModelId.TryRemove(datagram.Id, out DatagramModel tmpDatagram);
+                    var pipeSession = _session?.GetAttribute<IoSession>(SingleInstanceHelper<ConnectorHandler>.Instance.PipelineSessionKey);
+                    if (pipeSession == null)
+                        return;
+                    var slice = datagram.ToIoBuffer().GetSlice(DatagramModel.HeaderLength, datagram.DatagramLength);
+                    pipeSession.Write(slice.GetRemaining());
+                }
+            }
+
+            private void SendSynAck(CancellationToken token)
             {
                 _sendDatagramTask = _sendDatagramTask.ContinueWith((t) => {
                     TimeSpan cooldown = TimeSpan.Zero;
@@ -77,7 +99,7 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
                             _mEvt.Wait(cooldown, token);
                         else
                             _spin.SpinOnce();
-                        SendDatagram(token);
+                        SendSynAck(token);
                     }
                 }, token);
             }
@@ -89,10 +111,10 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
         }
 
         private readonly NLog.ILogger _logger = NLog.LogManager.GetLogger(typeof(AcceptorHandler).FullName);
-        private readonly AttributeKey _pipelineSessionKey = new AttributeKey(typeof(AcceptorHandler), "PipelineSessionKey");
-        private readonly AttributeKey _contextKey = new AttributeKey(typeof(AcceptorHandler), "ContextKey");
         private readonly IPAddress _forwardingHost = null;
         private readonly Int32? _forwardingPort = null;
+        public AttributeKey PipelineSessionKey { get; } = new AttributeKey(typeof(AcceptorHandler), "PipelineSessionKey");
+        public AttributeKey ContextKey { get; } = new AttributeKey(typeof(AcceptorHandler), "ContextKey");
 
         public AcceptorHandler()
         {
@@ -116,7 +138,7 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
             connector.Handler = connectorHandler;
             IConnectFuture future = connector.Connect(new IPEndPoint(forwardingHost, forwardingPort)).Await();
             var pipeSession = future.Session;
-            session.SetAttribute(_pipelineSessionKey, pipeSession);
+            session.SetAttribute(PipelineSessionKey, pipeSession);
             pipeSession.SetAttribute(connectorHandler.PipelineSessionKey, session);
         }
 
@@ -125,28 +147,26 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
             if (!(message is DatagramModel model))
                 return;
-            var pipeSession = session.GetAttribute<IoSession>(_pipelineSessionKey);
-            if (pipeSession == null)
-                return;
-            if(model.Type == DatagramModel.DatagramTypeEnum.SYN)
+
+            if (model.Type == DatagramModel.DatagramTypeEnum.SYN)
             {
-                var context = this.GetContext(session, _contextKey);
-                context.Enqueue(model);
+                var context = this.GetSessionContext(session);
+                context.HandleSYN(model);
             }
-            else if(model.Type == DatagramModel.DatagramTypeEnum.SYNACK)
+            else if (model.Type == DatagramModel.DatagramTypeEnum.SYNACK)
             {
 
             }
-            else if(model.Type == DatagramModel.DatagramTypeEnum.ACK)
+            else if (model.Type == DatagramModel.DatagramTypeEnum.ACK)
             {
-
+                var context = this.GetSessionContext(session);
+                context.HandleACK(model);
             }
-            //pipeSession.Write(bytes);
         }
 
         public override void SessionClosed(IoSession session)
         {
-            session.RemoveAttribute(_pipelineSessionKey);
+            session.RemoveAttribute(PipelineSessionKey);
             _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
         }
 
@@ -157,11 +177,9 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
                          , cause);
         }
 
-        void ISingleInstance.Init()
-        { }
-
-        private Context GetContext(IoSession session, AttributeKey key)
+        public Context GetSessionContext(IoSession session)
         {
+            AttributeKey key = ContextKey;
             var retVal = session?.GetAttribute<Context>(key);
             if (retVal == null)
             {
@@ -170,5 +188,8 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
             }
             return retVal;
         }
+
+        void ISingleInstance.Init()
+        { }
     }
 }
