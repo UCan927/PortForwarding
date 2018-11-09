@@ -38,7 +38,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             foreach (var buffer in Slice(bytes))
             {
                 var id = GenerateId();
-                var model = DatagramModel.Create(id, bytes.Array);
+                var model = DatagramModel.Create(id, buffer);
                 datagramQueue.Enqueue(id);
                 datagrams.TryAdd(id, model);
             }
