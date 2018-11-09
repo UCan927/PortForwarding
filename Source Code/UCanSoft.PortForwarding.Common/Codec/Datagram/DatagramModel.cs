@@ -158,6 +158,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 retVal.Put(buffer);
                 buffer = BitConverter.GetBytes(this.DatagramLength);
                 retVal.Put(buffer);
+                buffer = new Byte[this.DatagramLength];
+                this.Datagram.CopyTo(buffer, 0);
+                retVal.Put(buffer);
                 retVal.Flip();
                 _buffer = retVal.GetRemaining().Array;
             }
