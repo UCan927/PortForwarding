@@ -46,6 +46,9 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
         public override void SessionClosed(IoSession session)
         {
             session.RemoveAttribute(PipelineSessionKey);
+            var context = this.GetSessionContext(session);
+            context.Clear();
+            session.RemoveAttribute(ContextKey);
             _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
         }
 

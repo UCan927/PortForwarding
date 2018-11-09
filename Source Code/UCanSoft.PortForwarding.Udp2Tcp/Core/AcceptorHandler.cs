@@ -71,7 +71,12 @@ namespace UCanSoft.PortForwarding.Udp2Tcp.Core
 
         public override void SessionClosed(IoSession session)
         {
+            var pipeSession = session.GetAttribute<IoSession>(PipelineSessionKey);
+            pipeSession?.Close(true);
             session.RemoveAttribute(PipelineSessionKey);
+            var context = this.GetSessionContext(session);
+            context.Clear();
+            session.RemoveAttribute(ContextKey);
             _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
         }
 

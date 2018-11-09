@@ -33,7 +33,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         public static readonly Int32 DatagramIndex = DatagramLengthIndex + DatagramLengthLength;
         public static readonly Int32 MaxDatagramLength = 1000;
         public static readonly Int32 HeaderLength = HeaderFlagLength + DatagramTypeLength + DatagramIdLength + DatagramMD5Length + DatagramLengthLength;
-        private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(5.0D);
+        private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(0.1D);
 
         private Byte[] _buffer = null;
         private Int64? _ackId = null;

@@ -107,6 +107,20 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             }
         }
 
+        public void Clear()
+        {
+            _mEvt.Set();
+            _cts.Cancel();
+            while (!datagramQueue.IsEmpty)
+                datagramQueue.TryDequeue(out Int64 tmp);
+            datagrams.Clear();
+            while (!synAckQueue.IsEmpty)
+                synAckQueue.TryDequeue(out Int64 tmp);
+            synAcks.Clear();
+            datagramsUseModelId.Clear();
+            datagramsUseSynAckId.Clear();
+        }
+
         private void SendDatagram(CancellationToken token)
         {
             _sendDatagramTask = _sendDatagramTask.ContinueWith((t) => {
