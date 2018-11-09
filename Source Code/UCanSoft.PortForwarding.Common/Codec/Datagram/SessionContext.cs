@@ -168,13 +168,15 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 yield return bytes.Array;
             else
             {
-                Byte[] retVal = new Byte[DatagramModel.MaxDatagramLength];
+                Byte[] retVal = null;
                 var buffer = IoBuffer.Wrap(bytes.Array, bytes.Offset, bytes.Count);
                 while (buffer.HasRemaining)
                 {
                     var remaining = buffer.Remaining;
                     if (remaining <= DatagramModel.MaxDatagramLength)
                         retVal = new Byte[remaining];
+                    else
+                        retVal = new Byte[DatagramModel.MaxDatagramLength];
                     buffer.Get(retVal, 0, retVal.Length);
                     yield return retVal;
                 }
