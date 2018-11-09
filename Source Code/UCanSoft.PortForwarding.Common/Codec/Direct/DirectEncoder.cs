@@ -12,7 +12,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Direct
             if (!(message is ArraySegment<Byte> bytes)
                 || bytes.Count <= 0)
                 return;
-            var buffer = IoBuffer.Wrap(bytes.Array);
+            var buffer = IoBuffer.Wrap(bytes.Array, bytes.Offset, bytes.Count);
             output.Write(buffer);
         }
     }

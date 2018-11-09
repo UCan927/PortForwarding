@@ -65,14 +65,15 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         public static DatagramModel Create(IoBuffer buffer)
         {
             DatagramModel retVal = null;
-            if (buffer == null
-                || buffer.Remaining < HeaderLength)
+            var remaining = buffer?.Remaining ?? 0;
+            if (remaining < HeaderLength)
                 return retVal;
             retVal = new DatagramModel();
             try
             {
                 buffer.Mark();
-                var bytes = buffer.GetRemaining().Array;
+                var bytes = new Byte[remaining];
+                buffer.Get(bytes, 0, remaining);
                 retVal.HeaderFlag = Encoding.ASCII.GetString(bytes, HeaderFlagIndex, HeaderFlagLength);
                 if (retVal.HeaderFlag != ConstHeaderFlag)
                     throw new BadImageFormatException("数据包包头不匹配.");

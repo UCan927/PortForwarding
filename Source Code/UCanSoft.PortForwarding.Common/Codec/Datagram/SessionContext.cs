@@ -169,7 +169,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             else
             {
                 Byte[] retVal = new Byte[DatagramModel.MaxDatagramLength];
-                var buffer = IoBuffer.Wrap(bytes.Array);
+                var buffer = IoBuffer.Wrap(bytes.Array, bytes.Offset, bytes.Count);
                 while (buffer.HasRemaining)
                 {
                     var remaining = buffer.Remaining;

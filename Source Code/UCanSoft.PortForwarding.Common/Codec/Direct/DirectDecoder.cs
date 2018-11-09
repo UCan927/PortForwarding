@@ -1,6 +1,7 @@
 ﻿using Mina.Core.Buffer;
 using Mina.Core.Session;
 using Mina.Filter.Codec;
+using System;
 
 namespace UCanSoft.PortForwarding.Common.Codec.Direct
 {
@@ -11,8 +12,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Direct
             var remaining = input.Remaining;
             if (remaining <= 0)
                 return;
-            var bytes = input.GetRemaining();
-            input.Skip(remaining);
+            Byte[] buffer = new Byte[remaining];
+            input.Get(buffer, 0, remaining);
+            var bytes = new ArraySegment<Byte>(buffer);
             output.Write(bytes);
         }
     }
