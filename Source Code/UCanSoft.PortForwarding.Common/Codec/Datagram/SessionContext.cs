@@ -10,6 +10,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 {
     public class SessionContext
     {
+        private readonly NLog.ILogger _logger = null;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
         private readonly ConcurrentQueue<Int64> datagramQueue = new ConcurrentQueue<Int64>();
         private readonly ConcurrentDictionary<Int64, DatagramModel> datagrams = new ConcurrentDictionary<Int64, DatagramModel>();
@@ -31,6 +32,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         {
             _session = session;
             _pipelineSessionKey = pipelineSessionKey;
+            _logger = NLog.LogManager.GetLogger($"{session.Handler.GetType().FullName}#SessionId:{session.Id}");
         }
 
         public void Enqueue(ArraySegment<Byte> bytes)
@@ -41,6 +43,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 var model = DatagramModel.Create(id, buffer);
                 datagramQueue.Enqueue(id);
                 datagrams.TryAdd(id, model);
+                _logger.Debug("数据包[{0}:{1}]进入队列.", model.Id, model.ShorMd5);
             }
             if (Interlocked.CompareExchange(ref _isSendingDatagram, 1, 0) == 1)
                 return;
@@ -61,6 +64,8 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             synAcks.TryAdd(id, synAckModel);
             datagramsUseModelId.TryAdd(model.Id, model);
             datagramsUseSynAckId.TryAdd(id, model);
+            _logger.Debug("已收到数据包:[{0}:{1}],并将SYNACK[{2}:{3}]加入到队列",
+                         model.Id, model.ShorMd5, synAckModel.Id, synAckModel.ShorMd5);
             if (Interlocked.CompareExchange(ref _isSendingSynAck, 1, 0) == 1)
                 return;
             var token = _cts.Token;
@@ -136,6 +141,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                     if (cooldown != TimeSpan.Zero)
                         return;
                     _session.Write(model);
+                    _logger.Debug("数据包[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
                 }
                 finally
                 {
