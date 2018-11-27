@@ -2,6 +2,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Threading;
 using UCanSoft.PortForwarding.Common.Extended;
 using UCanSoft.PortForwarding.Common.Utility.Algorithms;
 
@@ -33,8 +34,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         public static readonly Int32 DatagramIndex = DatagramLengthIndex + DatagramLengthLength;
         public static readonly Int32 MaxDatagramLength = 1000;
         public static readonly Int32 HeaderLength = HeaderFlagLength + DatagramTypeLength + DatagramIdLength + DatagramMD5Length + DatagramLengthLength;
-        private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(0.1D);
+        private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(30.0D);
 
+        private readonly ManualResetEvent _mEvt = new ManualResetEvent(false);
         private Byte[] _buffer = null;
         private Int64? _ackId = null;
 
@@ -179,6 +181,16 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
         
+        public Boolean Wait()
+        {
+            return _mEvt.WaitOne(Cooldown);
+        }
+
+        public void CancelWait()
+        {
+            _mEvt.Set();
+        }
+
         private static String GetShorMd5(Byte[] buffer)
         {
             String retVal = null;

@@ -20,7 +20,6 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         private readonly ConcurrentDictionary<Int64, DatagramModel> datagramsUseSynAckId = new ConcurrentDictionary<Int64, DatagramModel>();
         private readonly IoSession _session = null;
         private readonly AttributeKey _pipelineSessionKey = null;
-        private readonly ManualResetEventSlim _mEvt = new ManualResetEventSlim(false);
         private readonly SpinWait _spin = new SpinWait();
         private Int64 _idGenerator = 0L;
         private Task _sendDatagramTask;
@@ -48,8 +47,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             if (Interlocked.CompareExchange(ref _isSendingDatagram, 1, 0) == 1)
                 return;
             var token = _cts.Token;
-            _sendDatagramTask = Task.Delay(TimeSpan.FromSeconds(1.0D), token)
-                                    .ContinueWith((t) => SendDatagram(token));
+            _sendDatagramTask = Task.Run(() => SendDatagram(token), token);
         }
 
         public void HandleSYN(DatagramModel model)
@@ -69,8 +67,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             if (Interlocked.CompareExchange(ref _isSendingSynAck, 1, 0) == 1)
                 return;
             var token = _cts.Token;
-            _sendSynAckTask = Task.Delay(TimeSpan.FromSeconds(1.0D), token)
-                                  .ContinueWith((t) => SendSynAck(token));
+            _sendSynAckTask = Task.Run(() => SendSynAck(token), token);
         }
 
         public void HandleSynAck(DatagramModel model)
@@ -88,6 +85,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 && datagramId != modelAckId)
                 throw new FormatException("ACK数据包Id与Datagram队列不匹配.");
             datagrams.TryRemove(datagramId, out DatagramModel datagram);
+            datagram.CancelWait();
+            _logger.Debug("收到数据包[{0}:{1}]的确认包，并已将ACK[{2}:{3}]发往远程主机[{4}]",
+                         datagram.Id, datagram.ShorMd5, ackModel.Id, ackModel.ShorMd5, _session.RemoteEndPoint);
         }
 
         public void HandleACK(DatagramModel model)
@@ -100,6 +100,8 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 && ackId != modelAckId)
                 throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
             synAcks.TryRemove(ackId, out DatagramModel synAckModel);
+            synAckModel?.CancelWait();
+            _logger.Debug("收到ACK[{0}:{1}], SYNACK[{2}:{3}]已被确认.", model.Id, model.ShorMd5, synAckModel.Id, synAckModel.ShorMd5);
             if (datagramsUseSynAckId.TryRemove(ackId, out DatagramModel datagram)
                 && datagram != null)
             {
@@ -113,14 +115,19 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         }
 
         public void Clear()
-        {
-            _mEvt.Set();
+        {   
             _cts.Cancel();
             while (!datagramQueue.IsEmpty)
+            {
                 datagramQueue.TryDequeue(out Int64 tmp);
+                _logger.Debug("连接已断开, 数据包[{0}]还未发送.", tmp);
+            }
             datagrams.Clear();
             while (!synAckQueue.IsEmpty)
+            {
                 synAckQueue.TryDequeue(out Int64 tmp);
+                _logger.Debug("连接已断开, SYNACK[{0}]还未发送.", tmp);
+            }
             synAcks.Clear();
             datagramsUseModelId.Clear();
             datagramsUseSynAckId.Clear();
@@ -129,25 +136,20 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         private void SendDatagram(CancellationToken token)
         {
             _sendDatagramTask = _sendDatagramTask.ContinueWith((t) => {
-                TimeSpan cooldown = TimeSpan.Zero;
+                DatagramModel model = null;
                 try
                 {
                     if (!datagramQueue.TryPeek(out Int64 id))
                         return;
-                    if (!datagrams.TryGetValue(id, out DatagramModel model)
+                    if (!datagrams.TryGetValue(id, out model)
                         || model == null)
-                        return;
-                    cooldown = model.Cooldown;
-                    if (cooldown != TimeSpan.Zero)
                         return;
                     _session.Write(model);
                     _logger.Debug("数据包[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
                 }
                 finally
                 {
-                    if (cooldown != TimeSpan.Zero)
-                        _mEvt.Wait(cooldown, token);
-                    else
+                    if (model?.Wait() ?? false)
                         _spin.SpinOnce();
                     SendDatagram(token);
                 }
@@ -158,25 +160,20 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         {
             _sendSynAckTask = _sendSynAckTask.ContinueWith((t) =>
             {
-                TimeSpan cooldown = TimeSpan.Zero;
+                DatagramModel model = null;
                 try
                 {
                     if (!synAckQueue.TryPeek(out Int64 id))
                         return;
-                    if (!synAcks.TryGetValue(id, out DatagramModel model)
+                    if (!synAcks.TryGetValue(id, out model)
                         || model == null)
-                        return;
-                    cooldown = model.Cooldown;
-                    if (cooldown != TimeSpan.Zero)
                         return;
                     _session.Write(model);
                     _logger.Debug("SYNACK[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
                 }
                 finally
                 {
-                    if (cooldown != TimeSpan.Zero)
-                        _mEvt.Wait(cooldown, token);
-                    else
+                    if (model?.Wait() ?? false)
                         _spin.SpinOnce();
                     SendSynAck(token);
                 }
