@@ -149,7 +149,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 }
                 finally
                 {
-                    if (model?.Wait() ?? false)
+                    if (!(model?.Wait() ?? false))
                         _spin.SpinOnce();
                     SendDatagram(token);
                 }
@@ -173,7 +173,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 }
                 finally
                 {
-                    if (model?.Wait() ?? false)
+                    if (!(model?.Wait() ?? false))
                         _spin.SpinOnce();
                     SendSynAck(token);
                 }
