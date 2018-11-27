@@ -32,7 +32,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         {
             _session = session;
             _pipelineSessionKey = pipelineSessionKey;
-            _logger = NLog.LogManager.GetLogger($"{session.Handler.GetType().FullName}#SessionId:{session.Id}");
+            _logger = NLog.LogManager.GetLogger($"{session.Handler.GetType().FullName}.SessionId.{session.Id}");
         }
 
         public void Enqueue(ArraySegment<Byte> bytes)
@@ -170,6 +170,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                     if (cooldown != TimeSpan.Zero)
                         return;
                     _session.Write(model);
+                    _logger.Debug("SYNACK[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
                 }
                 finally
                 {
