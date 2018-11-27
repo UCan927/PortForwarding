@@ -101,7 +101,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
             synAcks.TryRemove(ackId, out DatagramModel synAckModel);
             synAckModel?.CancelWait();
-            _logger.Debug("收到ACK[{0}:{1}], SYNACK[{2}:{3}]已被确认.", model.Id, model.ShorMd5, synAckModel.Id, synAckModel.ShorMd5);
+            _logger.Debug("收到ACK[{0}:{1}], SYNACK[{2}:{3}]已被确认.", model.Id, model.ShorMd5, synAckModel?.Id, synAckModel?.ShorMd5);
             if (datagramsUseSynAckId.TryRemove(ackId, out DatagramModel datagram)
                 && datagram != null)
             {
