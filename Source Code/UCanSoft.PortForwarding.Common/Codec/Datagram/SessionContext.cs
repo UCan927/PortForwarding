@@ -87,8 +87,11 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 throw new FormatException("ACK数据包Id与Datagram队列不匹配.");
             datagrams.TryRemove(datagramId, out DatagramModel datagram);
             datagram.CancelWait();
-            _logger.Debug("收到数据包[{0}:{1}]的确认包，并已将ACK[{2}:{3}]发往远程主机[{4}]",
-                         datagram.Id, datagram.ShorMd5, ackModel.Id, ackModel.ShorMd5, _session.RemoteEndPoint);
+            _logger.Debug("数据包[{0}:{1}]已被确认包[{2}:{3}]确认，并已将ACK[{4}:{5}]发往远程主机[{4}]"
+                         , datagram.Id, datagram.ShorMd5
+                         , model.Id, model.ShorMd5
+                         , ackModel.Id, ackModel.ShorMd5
+                         , _session.RemoteEndPoint);
         }
 
         public void HandleACK(DatagramModel model)
