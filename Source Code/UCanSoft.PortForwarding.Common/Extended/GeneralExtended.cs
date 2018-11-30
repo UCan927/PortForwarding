@@ -140,12 +140,15 @@ namespace UCanSoft.PortForwarding.Common.Extended
         /// </summary>
         /// <param name="src"></param>
         /// <returns></returns>
-        public static String ToHex(this Byte[] src)
+        public static String ToHex(this Byte[] src, String separator = null)
         {
             String retVal = String.Empty;
             if (src.IsNullOrEmpty())
                 return retVal;
             retVal = BitConverter.ToString(src);
+            separator = separator ?? String.Empty;
+            if (separator != "-")
+                retVal = retVal.Replace("-", separator);
             return retVal;
         }
 
@@ -154,12 +157,15 @@ namespace UCanSoft.PortForwarding.Common.Extended
         /// </summary>
         /// <param name="src"></param>
         /// <returns></returns>
-        public static String ToHex(this Byte[] src, Int32 index, Int32 count)
+        public static String ToHex(this Byte[] src, Int32 index, Int32 count, String separator = null)
         {
             String retVal = String.Empty;
             if (src.IsNullOrEmpty())
                 return retVal;
+            separator = separator ?? String.Empty;
             retVal = BitConverter.ToString(src, index, count);
+            if (separator != "-")
+                retVal = retVal.Replace("-", separator);
             return retVal;
         }
         #endregion
