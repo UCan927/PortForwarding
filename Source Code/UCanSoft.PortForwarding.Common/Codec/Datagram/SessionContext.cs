@@ -3,8 +3,10 @@ using Mina.Core.Session;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using UCanSoft.PortForwarding.Common.Extended;
 
 namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 {
@@ -12,16 +14,15 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
     {
         private readonly NLog.ILogger _logger = null;
         private readonly CancellationTokenSource _cts = new CancellationTokenSource();
-        private readonly ConcurrentQueue<Int64> datagramQueue = new ConcurrentQueue<Int64>();
-        private readonly ConcurrentDictionary<Int64, DatagramModel> datagrams = new ConcurrentDictionary<Int64, DatagramModel>();
-        private readonly ConcurrentQueue<Int64> synAckQueue = new ConcurrentQueue<Int64>();
-        private readonly ConcurrentDictionary<Int64, DatagramModel> synAcks = new ConcurrentDictionary<Int64, DatagramModel>();
-        private readonly ConcurrentDictionary<Int64, DatagramModel> datagramsUseModelId = new ConcurrentDictionary<Int64, DatagramModel>();
-        private readonly ConcurrentDictionary<Int64, DatagramModel> datagramsUseSynAckId = new ConcurrentDictionary<Int64, DatagramModel>();
+        private readonly ConcurrentQueue<String> datagramQueue = new ConcurrentQueue<String>();
+        private readonly ConcurrentDictionary<String, DatagramModel> datagrams = new ConcurrentDictionary<String, DatagramModel>();
+        private readonly ConcurrentQueue<String> synAckQueue = new ConcurrentQueue<String>();
+        private readonly ConcurrentDictionary<String, DatagramModel> synAcks = new ConcurrentDictionary<String, DatagramModel>();
+        private readonly ConcurrentDictionary<String, DatagramModel> datagramsUseModelId = new ConcurrentDictionary<String, DatagramModel>();
+        private readonly ConcurrentDictionary<String, DatagramModel> datagramsUseSynAckId = new ConcurrentDictionary<String, DatagramModel>();
         private readonly IoSession _session = null;
         private readonly AttributeKey _pipelineSessionKey = null;
         private readonly SpinWait _spin = new SpinWait();
-        private Int64 _idGenerator = 0L;
         private Task _sendDatagramTask;
         private Task _sendSynAckTask;
         private Int32 _isSendingSynAck = 0;
@@ -77,11 +78,11 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             var id = GenerateId();
             var ackModel = DatagramModel.Create(id, model.Id, DatagramModel.DatagramTypeEnum.ACK);
             _session.Write(ackModel);
-            if (!model.TryGetAckId(out Int64 modelAckId))
+            if (!model.TryGetAckId(out String modelAckId))
                 throw new FormatException("ACK数据包格式不正确.");
             if (!datagrams.ContainsKey(modelAckId))
                 return;
-            if (datagramQueue.TryDequeue(out Int64 datagramId)
+            if (datagramQueue.TryDequeue(out String datagramId)
                 && datagramId != modelAckId)
                 throw new FormatException("ACK数据包Id与Datagram队列不匹配.");
             datagrams.TryRemove(datagramId, out DatagramModel datagram);
@@ -94,9 +95,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         {
             if (model.Type != DatagramModel.DatagramTypeEnum.ACK)
                 return;
-            if (!model.TryGetAckId(out Int64 modelAckId))
+            if (!model.TryGetAckId(out String modelAckId))
                 throw new FormatException("ACK数据包格式不正确.");
-            if (synAckQueue.TryDequeue(out Int64 ackId)
+            if (synAckQueue.TryDequeue(out String ackId)
                 && ackId != modelAckId)
                 throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
             synAcks.TryRemove(ackId, out DatagramModel synAckModel);
@@ -119,13 +120,13 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             _cts.Cancel();
             while (!datagramQueue.IsEmpty)
             {
-                datagramQueue.TryDequeue(out Int64 tmp);
+                datagramQueue.TryDequeue(out String tmp);
                 _logger.Debug("连接已断开, 数据包[{0}]还未发送.", tmp);
             }
             datagrams.Clear();
             while (!synAckQueue.IsEmpty)
             {
-                synAckQueue.TryDequeue(out Int64 tmp);
+                synAckQueue.TryDequeue(out String tmp);
                 _logger.Debug("连接已断开, SYNACK[{0}]还未发送.", tmp);
             }
             synAcks.Clear();
@@ -139,7 +140,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 DatagramModel model = null;
                 try
                 {
-                    if (!datagramQueue.TryPeek(out Int64 id))
+                    if (!datagramQueue.TryPeek(out String id))
                         return;
                     if (!datagrams.TryGetValue(id, out model)
                         || model == null)
@@ -163,7 +164,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 DatagramModel model = null;
                 try
                 {
-                    if (!synAckQueue.TryPeek(out Int64 id))
+                    if (!synAckQueue.TryPeek(out String id))
                         return;
                     if (!synAcks.TryGetValue(id, out model)
                         || model == null)
@@ -201,9 +202,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             }
         }
 
-        private Int64 GenerateId()
+        private String GenerateId()
         {
-            return Interlocked.Increment(ref _idGenerator);
+            return Guid.NewGuid().ToByteArray().Take(8).ToArray().ToHex();
         }
     }
 }

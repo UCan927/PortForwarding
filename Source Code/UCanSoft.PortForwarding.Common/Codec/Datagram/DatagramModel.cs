@@ -38,11 +38,11 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 
         private readonly ManualResetEvent _mEvt = new ManualResetEvent(false);
         private Byte[] _buffer = null;
-        private Int64? _ackId = null;
+        private String _ackId = null;
 
         public String HeaderFlag { get; private set; }
         public DatagramTypeEnum Type { get; private set; }
-        public Int64 Id { get; private set; }
+        public String Id { get; private set; }
         public String ShorMd5 { get; private set; } 
         public UInt16 DatagramLength { get { return (UInt16)Datagram.Count; } }
         public DateTime? LastSendTime { get; set; } = null;
@@ -80,7 +80,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 if (retVal.HeaderFlag != ConstHeaderFlag)
                     throw new BadImageFormatException("数据包包头不匹配.");
                 retVal.Type = (DatagramTypeEnum)bytes[DatagramTyepIndex];
-                retVal.Id = BitConverter.ToInt64(bytes, DatagramIdIndex);
+                retVal.Id = bytes.ToHex(DatagramIdIndex, DatagramIdLength);
                 var shortMd5Bytes = new Byte[DatagramMD5Length];
                 Array.Copy(bytes, DatagramMD5Index, shortMd5Bytes, 0, DatagramMD5Length);
                 retVal.ShorMd5 = BitConverter.ToString(shortMd5Bytes).Replace("-", String.Empty);
@@ -97,9 +97,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 retVal.Datagram = new ReadOnlyCollection<Byte>(datagram);
                 if ((retVal.Type == DatagramTypeEnum.SYNACK
                     || retVal.Type == DatagramTypeEnum.ACK)
-                    && retVal.DatagramLength == sizeof(Int64))
+                    && retVal.DatagramLength == DatagramIdLength)
                 {
-                    var ackId = BitConverter.ToInt64(datagram, 0);
+                    var ackId = datagram.ToHex();
                     retVal._ackId = ackId;
                 }
             }
@@ -110,7 +110,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
-        public static DatagramModel Create(Int64 id, Byte[] buffer)
+        public static DatagramModel Create(String id, Byte[] buffer)
         {
             buffer = buffer ?? new Byte[0];
             if (buffer.Length > MaxDatagramLength)
@@ -126,12 +126,12 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
-        public static DatagramModel Create(Int64 id, Int64 ackId, DatagramTypeEnum type)
+        public static DatagramModel Create(String id, String ackId, DatagramTypeEnum type)
         {
             if (type != DatagramTypeEnum.ACK
                 && type != DatagramTypeEnum.SYNACK)
                 throw new ArgumentException("该只能创建SYNACK或ACK数据包");
-            var buffer = BitConverter.GetBytes(ackId);
+            var buffer = ackId.ToHex();
             DatagramModel retVal = new DatagramModel
             {
                 HeaderFlag = ConstHeaderFlag,
@@ -155,7 +155,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 var buffer = Encoding.ASCII.GetBytes(this.HeaderFlag);
                 retVal.Put(buffer);
                 retVal.Put((Byte)this.Type);
-                buffer = BitConverter.GetBytes(this.Id);
+                buffer = this.Id.ToHex();
                 retVal.Put(buffer);
                 buffer = this.ShorMd5.ToHex();
                 retVal.Put(buffer);
@@ -170,14 +170,14 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
-        public Boolean TryGetAckId(out Int64 ackId)
+        public Boolean TryGetAckId(out String ackId)
         {
             Boolean retVal = false;
-            ackId = 0L;
-            if (!this._ackId.HasValue)
+            ackId = String.Empty;
+            if (String.IsNullOrWhiteSpace(this._ackId))
                 return retVal;
             retVal = true;
-            ackId = this._ackId.Value;
+            ackId = this._ackId;
             return retVal;
         }
         

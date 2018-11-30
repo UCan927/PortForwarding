@@ -12,13 +12,6 @@ namespace UCanSoft.PortForwarding.TestTool.Core
         { }
 
         public override void MessageSent(IoSession session, object message)
-        {
-            if (!(message is ArraySegment<Byte> bytes))
-                return;
-            using (var stream = File.Open(@".\Save2.data", FileMode.Append))
-            {
-                stream.Write(bytes.Array, bytes.Offset, bytes.Count);
-            }
-        }
+        { }
     }
 }

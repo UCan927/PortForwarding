@@ -104,6 +104,7 @@ namespace UCanSoft.PortForwarding.TestTool
                                         break;
                                     var bytes = new ArraySegment<Byte>(buffer, 0, readLen);
                                     connector.Broadcast(bytes);
+                                    System.Threading.Thread.Sleep(50);
                                 }
                                 while (true);
                             }
