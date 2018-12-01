@@ -18,128 +18,104 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         }
 
         private static readonly Boolean _fillMD5 = true;
-        private static readonly Boolean _checkData = true;
+        private static readonly Boolean _checkData = true && _fillMD5;
         public static readonly String ConstHeaderFlag = "OTW";
         public static readonly ReadOnlyCollection<Byte> HeaderFlagBytes = new ReadOnlyCollection<Byte>(Encoding.ASCII.GetBytes(ConstHeaderFlag));
         public static readonly Int32 HeaderFlagIndex = 0;
-        public static readonly Int32 HeaderFlagLength = HeaderFlagBytes.Count; //3
-        public static readonly Int32 DatagramTyepIndex = HeaderFlagIndex + HeaderFlagLength; //3
-        public static readonly Int32 DatagramTypeLength = 1;
-        public static readonly Int32 DatagramIdIndex = DatagramTyepIndex + DatagramTypeLength; //4
-        public static readonly Int32 DatagramIdLength = 8;
-        public static readonly Int32 DatagramMD5Index = DatagramIdIndex + DatagramIdLength; //12
-        public static readonly Int32 DatagramMD5Length = 10;
-        public static readonly Int32 DatagramLengthIndex = DatagramMD5Index + DatagramMD5Length;
-        public static readonly Int32 DatagramLengthLength = sizeof(UInt16);
-        public static readonly Int32 DatagramIndex = DatagramLengthIndex + DatagramLengthLength;
-        public static readonly Int32 MaxDatagramLength = 1000;
-        public static readonly Int32 HeaderLength = HeaderFlagLength + DatagramTypeLength + DatagramIdLength + DatagramMD5Length + DatagramLengthLength;
+        public static readonly Int32 HeaderFlagLength = HeaderFlagBytes.Count;                          //03
+        public static readonly Int32 TypeIndex = HeaderFlagIndex + HeaderFlagLength;                    //03
+        public static readonly Int32 TypeLength = sizeof(Byte);                                         //01
+        public static readonly Int32 IdIndex = TypeIndex + TypeLength;                                  //04
+        public static readonly Int32 IdLength = Guid.NewGuid().ToByteArray().Length;                    //16
+        public static readonly Int32 Md5Index = IdIndex + IdLength;                                     //20
+        public static readonly Int32 Md5Length = Cryptography.ComputeMD5Hash().Length;                  //16
+        public static readonly Int32 SrcTcpSessionIdIndex = Md5Index + Md5Length;                       //36
+        public static readonly Int32 SrcTcpSessionIdLength = sizeof(Int64);                             //08
+        public static readonly Int32 DatasLengthIndex = SrcTcpSessionIdIndex + SrcTcpSessionIdLength;   //44
+        public static readonly Int32 DatasLengthLength = sizeof(UInt16);                                //02
+        public static readonly Int32 DatasIndex = DatasLengthIndex + DatasLengthLength;                 //46
+        public static readonly Int32 HeaderLength = HeaderFlagLength + TypeLength
+                                                    + IdLength + Md5Length
+                                                    + SrcTcpSessionIdLength + DatasLengthLength;        //46
+        public static readonly Int32 MaxDatasLength = 1024;
         private static readonly TimeSpan _cooldown = TimeSpan.FromSeconds(30.0D);
 
         private readonly ManualResetEvent _mEvt = new ManualResetEvent(false);
-        private Byte[] _buffer = null;
-        private String _ackId = null;
+        private Byte[] _datagram = null;
 
         public String HeaderFlag { get; private set; }
         public DatagramTypeEnum Type { get; private set; }
         public String Id { get; private set; }
-        public String ShorMd5 { get; private set; } 
-        public UInt16 DatagramLength { get { return (UInt16)Datagram.Count; } }
+        public String Md5 { get; private set; }
+        public Int64 SrcTcpSessionId { get; private set; } = -1024;
+        public UInt16 DatasLength { get { return (UInt16)Datas.Count; } }
+        public ReadOnlyCollection<Byte> Datas { get; private set; }
         public DateTime? LastSendTime { get; set; } = null;
         public TimeSpan Cooldown { get { return GetCooldown(); } }
-
-        private TimeSpan GetCooldown()
-        {
-            TimeSpan retVal = TimeSpan.Zero;
-            var lastSendTime = LastSendTime ?? DateTime.MinValue;
-            var interval = DateTime.Now - lastSendTime;
-            if (interval >= _cooldown)
-                return retVal;
-            retVal = _cooldown - interval;
-            return retVal;
-        }
-
-        public ReadOnlyCollection<Byte> Datagram { get; private set; }
 
         private DatagramModel()
         { }
 
-        public static DatagramModel Create(IoBuffer buffer)
+        public static DatagramModel Create(Byte[] datagram)
         {
             DatagramModel retVal = null;
-            var remaining = buffer?.Remaining ?? 0;
-            if (remaining < HeaderLength)
+            if (datagram.IsNullOrEmpty()
+                || datagram.Length < HeaderLength)
                 return retVal;
             retVal = new DatagramModel();
-            try
-            {
-                buffer.Mark();
-                var bytes = new Byte[remaining];
-                buffer.Get(bytes, 0, remaining);
-                retVal.HeaderFlag = Encoding.ASCII.GetString(bytes, HeaderFlagIndex, HeaderFlagLength);
-                if (retVal.HeaderFlag != ConstHeaderFlag)
-                    throw new BadImageFormatException("数据包包头不匹配.");
-                retVal.Type = (DatagramTypeEnum)bytes[DatagramTyepIndex];
-                retVal.Id = bytes.ToHex(DatagramIdIndex, DatagramIdLength);
-                var shortMd5Bytes = new Byte[DatagramMD5Length];
-                Array.Copy(bytes, DatagramMD5Index, shortMd5Bytes, 0, DatagramMD5Length);
-                retVal.ShorMd5 = BitConverter.ToString(shortMd5Bytes).Replace("-", String.Empty);
-                var datagramLength = BitConverter.ToUInt16(bytes, DatagramLengthIndex);
-                if (datagramLength > MaxDatagramLength)
-                    throw new IndexOutOfRangeException("数据包长度超长.");
-                if (datagramLength != bytes.Length - HeaderLength)
-                    throw new IndexOutOfRangeException("数据包描述长度与实际长度不匹配.");
-                var datagram = new Byte[datagramLength];
-                Array.Copy(bytes, DatagramIndex, datagram, 0, datagramLength);
-                var realShorMd5 = GetShorMd5(datagram);
-                if (_checkData && realShorMd5 != retVal.ShorMd5)
-                    throw new BadImageFormatException("MD5效验失败!");
-                retVal.Datagram = new ReadOnlyCollection<Byte>(datagram);
-                if ((retVal.Type == DatagramTypeEnum.SYNACK
-                    || retVal.Type == DatagramTypeEnum.ACK)
-                    && retVal.DatagramLength == DatagramIdLength)
-                {
-                    var ackId = datagram.ToHex();
-                    retVal._ackId = ackId;
-                }
-            }
-            finally
-            {
-                buffer.Reset();
-            }
+            retVal.HeaderFlag = Encoding.ASCII.GetString(datagram, HeaderFlagIndex, HeaderFlagLength);
+            if (retVal.HeaderFlag != ConstHeaderFlag)
+                throw new BadImageFormatException("数据包包头不匹配.");
+            retVal.Type = (DatagramTypeEnum)datagram[TypeIndex];
+            retVal.Id = datagram.ToHex(IdIndex, IdLength);
+            retVal.Md5 = datagram.ToHex(Md5Index, Md5Length);
+            retVal.SrcTcpSessionId = BitConverter.ToInt64(datagram, SrcTcpSessionIdIndex);
+            var datasLength = BitConverter.ToUInt16(datagram, DatasLengthIndex);
+            if (datasLength > MaxDatasLength)
+                throw new IndexOutOfRangeException("数据包长度超长.");
+            if (datasLength != datagram.Length - HeaderLength)
+                throw new IndexOutOfRangeException("数据包描述长度与实际长度不匹配.");
+            var datas = new Byte[datasLength];
+            Array.Copy(datagram, DatasIndex, datas, 0, datasLength);
+            var realMd5 = GetMd5(datas);
+            if (_checkData && realMd5 != retVal.Md5)
+                throw new BadImageFormatException("MD5效验失败!");
+            retVal.Datas = new ReadOnlyCollection<Byte>(datas);
+            retVal._datagram = datagram;
             return retVal;
         }
 
-        public static DatagramModel Create(String id, Byte[] buffer)
+        public static DatagramModel Create(String id, Int64 srcTcpSessionId, Byte[] datas)
         {
-            buffer = buffer ?? new Byte[0];
-            if (buffer.Length > MaxDatagramLength)
+            datas = datas ?? new Byte[0];
+            if (datas.Length > MaxDatasLength)
                 throw new IndexOutOfRangeException("buffer长度超长.");
             DatagramModel retVal = new DatagramModel
             {
                 HeaderFlag = ConstHeaderFlag,
                 Type = DatagramTypeEnum.SYN,
                 Id = id,
-                ShorMd5 = GetShorMd5(buffer),
-                Datagram = new ReadOnlyCollection<Byte>(buffer)
+                Md5 = GetMd5(datas),
+                SrcTcpSessionId = srcTcpSessionId,
+                Datas = new ReadOnlyCollection<Byte>(datas)
             };
             return retVal;
         }
 
-        public static DatagramModel Create(String id, String ackId, DatagramTypeEnum type)
+        public static DatagramModel Create(String id, Int64 srcTcpSessionId, String ackId, DatagramTypeEnum type)
         {
             if (type != DatagramTypeEnum.ACK
                 && type != DatagramTypeEnum.SYNACK)
-                throw new ArgumentException("该只能创建SYNACK或ACK数据包");
+                throw new ArgumentException("该方法只能创建SYNACK或ACK数据包");
             var buffer = ackId.ToHex();
             DatagramModel retVal = new DatagramModel
             {
                 HeaderFlag = ConstHeaderFlag,
                 Type = type,
                 Id = id,
-                ShorMd5 = GetShorMd5(buffer),
-                Datagram = new ReadOnlyCollection<Byte>(buffer),
-                _ackId = ackId
+                Md5 = GetMd5(buffer),
+                SrcTcpSessionId = srcTcpSessionId,
+                Datas = new ReadOnlyCollection<Byte>(buffer)
             };
             return retVal;
         }
@@ -147,37 +123,23 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
         public IoBuffer ToIoBuffer()
         {
             IoBuffer retVal = null;
-            if (_buffer != null)
-                retVal = IoBuffer.Wrap(_buffer);
-            else
+            if (_datagram == null)
             {
-                retVal = IoBuffer.Allocate(HeaderLength + this.DatagramLength);
+                _datagram = new Byte[HeaderLength + this.DatasLength];
                 var buffer = Encoding.ASCII.GetBytes(this.HeaderFlag);
-                retVal.Put(buffer);
-                retVal.Put((Byte)this.Type);
+                Array.Copy(buffer, 0, _datagram, HeaderFlagIndex, HeaderFlagLength);
+                _datagram[TypeIndex] = (Byte)this.Type;
                 buffer = this.Id.ToHex();
-                retVal.Put(buffer);
-                buffer = this.ShorMd5.ToHex();
-                retVal.Put(buffer);
-                buffer = BitConverter.GetBytes(this.DatagramLength);
-                retVal.Put(buffer);
-                buffer = new Byte[this.DatagramLength];
-                this.Datagram.CopyTo(buffer, 0);
-                retVal.Put(buffer);
-                retVal.Flip();
-                _buffer = retVal.GetRemaining().Array;
+                Array.Copy(buffer, 0, _datagram, IdIndex, IdLength);
+                buffer = this.Md5.ToHex();
+                Array.Copy(buffer, 0, _datagram, Md5Index, Md5Length);
+                buffer = BitConverter.GetBytes(this.SrcTcpSessionId);
+                Array.Copy(buffer, 0, _datagram, SrcTcpSessionIdIndex, SrcTcpSessionIdLength);
+                buffer = BitConverter.GetBytes(this.DatasLength);
+                Array.Copy(buffer, 0, _datagram, DatasLengthIndex, DatasLengthLength);
+                this.Datas.CopyTo(_datagram, DatasIndex);
             }
-            return retVal;
-        }
-
-        public Boolean TryGetAckId(out String ackId)
-        {
-            Boolean retVal = false;
-            ackId = String.Empty;
-            if (String.IsNullOrWhiteSpace(this._ackId))
-                return retVal;
-            retVal = true;
-            ackId = this._ackId;
+            retVal = IoBuffer.Wrap(_datagram, 0, _datagram.Length);
             return retVal;
         }
         
@@ -191,7 +153,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             _mEvt.Set();
         }
 
-        private static String GetShorMd5(Byte[] buffer)
+        private static String GetMd5(Byte[] buffer)
         {
             String retVal = null;
             var md5Bytes = new Byte[0];
@@ -199,11 +161,18 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 md5Bytes = Cryptography.ComputeMD5Hash(buffer);
             else
                 md5Bytes = Cryptography.ComputeMD5Hash();
-            var shortMd5Bytes = new Byte[DatagramMD5Length];
-            Array.Copy(md5Bytes, 0, shortMd5Bytes, 0, 3);
-            Array.Copy(md5Bytes, 6, shortMd5Bytes, 3, 4);
-            Array.Copy(md5Bytes, 13, shortMd5Bytes, 7, 3);
-            retVal = BitConverter.ToString(shortMd5Bytes).Replace("-", String.Empty);
+            retVal = md5Bytes.ToHex();
+            return retVal;
+        }
+
+        private TimeSpan GetCooldown()
+        {
+            TimeSpan retVal = TimeSpan.Zero;
+            var lastSendTime = LastSendTime ?? DateTime.MinValue;
+            var interval = DateTime.Now - lastSendTime;
+            if (interval >= _cooldown)
+                return retVal;
+            retVal = _cooldown - interval;
             return retVal;
         }
     }

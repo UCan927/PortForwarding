@@ -14,7 +14,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Direct
                 return;
             Byte[] buffer = new Byte[remaining];
             input.Get(buffer, 0, remaining);
-            var bytes = new ArraySegment<Byte>(buffer);
+            var bytes = new ArraySegment<Byte>(buffer, 0, remaining);
             output.Write(bytes);
         }
     }

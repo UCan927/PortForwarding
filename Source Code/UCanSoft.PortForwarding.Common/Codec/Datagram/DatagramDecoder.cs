@@ -23,7 +23,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             else
             {
                 var datagramLengthBytes = this.GetDatagramLengthBuffer(session);
-                input.Skip(DatagramModel.HeaderLength - DatagramModel.DatagramLengthLength);
+                input.Skip(DatagramModel.HeaderLength - DatagramModel.DatasLengthLength);
                 input.Get(datagramLengthBytes, 0, datagramLengthBytes.Length);
                 var datagramLength = BitConverter.ToUInt16(datagramLengthBytes, 0);
                 if (input.Remaining < datagramLength)
@@ -85,7 +85,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             Byte[] retVal = session.GetAttribute<Byte[]>(_totalPackageLengthBufferKey);
             if (retVal == null)
             {
-                retVal = new Byte[DatagramModel.DatagramLengthLength];
+                retVal = new Byte[DatagramModel.DatasLengthLength];
                 session.SetAttribute(_totalPackageLengthBufferKey, retVal);
             }
             return retVal;

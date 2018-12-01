@@ -43,7 +43,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 var model = DatagramModel.Create(id, buffer);
                 datagramQueue.Enqueue(id);
                 datagrams.TryAdd(id, model);
-                _logger.Debug("数据包[{0}:{1}]进入队列.", model.Id, model.ShorMd5);
+                _logger.Debug("数据包[{0}:{1}]进入队列.", model.Id, model.Md5);
             }
             if (Interlocked.CompareExchange(ref _isSendingDatagram, 1, 0) == 1)
                 return;
@@ -64,7 +64,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             datagramsUseModelId.TryAdd(model.Id, model);
             datagramsUseSynAckId.TryAdd(id, model);
             _logger.Debug("已收到数据包:[{0}:{1}],并将SYNACK[{2}:{3}]加入到队列",
-                         model.Id, model.ShorMd5, synAckModel.Id, synAckModel.ShorMd5);
+                         model.Id, model.Md5, synAckModel.Id, synAckModel.Md5);
             if (Interlocked.CompareExchange(ref _isSendingSynAck, 1, 0) == 1)
                 return;
             var token = _cts.Token;
@@ -88,9 +88,9 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             datagrams.TryRemove(datagramId, out DatagramModel datagram);
             datagram.CancelWait();
             _logger.Debug("数据包[{0}:{1}]已被确认包[{2}:{3}]确认，并已将ACK[{4}:{5}]发往远程主机[{4}]"
-                         , datagram.Id, datagram.ShorMd5
-                         , model.Id, model.ShorMd5
-                         , ackModel.Id, ackModel.ShorMd5
+                         , datagram.Id, datagram.Md5
+                         , model.Id, model.Md5
+                         , ackModel.Id, ackModel.Md5
                          , _session.RemoteEndPoint);
         }
 
@@ -105,7 +105,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 throw new FormatException("ACK数据包Id与SynACK队列不匹配.");
             synAcks.TryRemove(ackId, out DatagramModel synAckModel);
             synAckModel?.CancelWait();
-            _logger.Debug("收到ACK[{0}:{1}], SYNACK[{2}:{3}]已被确认.", model.Id, model.ShorMd5, synAckModel?.Id, synAckModel?.ShorMd5);
+            _logger.Debug("收到ACK[{0}:{1}], SYNACK[{2}:{3}]已被确认.", model.Id, model.Md5, synAckModel?.Id, synAckModel?.Md5);
             if (datagramsUseSynAckId.TryRemove(ackId, out DatagramModel datagram)
                 && datagram != null)
             {
@@ -113,7 +113,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 var pipeSession = _session?.GetAttribute<IoSession>(_pipelineSessionKey);
                 if (pipeSession == null)
                     return;
-                var slice = datagram.ToIoBuffer().GetSlice(DatagramModel.HeaderLength, datagram.DatagramLength);
+                var slice = datagram.ToIoBuffer().GetSlice(DatagramModel.HeaderLength, datagram.DatasLength);
                 pipeSession.Write(slice.GetRemaining());
             }
         }
@@ -149,7 +149,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                         || model == null)
                         return;
                     _session.Write(model);
-                    _logger.Debug("数据包[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
+                    _logger.Debug("数据包[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.Md5, _session.RemoteEndPoint);
                 }
                 finally
                 {
@@ -173,7 +173,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                         || model == null)
                         return;
                     _session.Write(model);
-                    _logger.Debug("SYNACK[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.ShorMd5, _session.RemoteEndPoint);
+                    _logger.Debug("SYNACK[{0}:{1}]已被发送到远程主机[{2}]", model.Id, model.Md5, _session.RemoteEndPoint);
                 }
                 finally
                 {
@@ -186,7 +186,7 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
 
         private IEnumerable<Byte[]> Slice(ArraySegment<Byte> bytes)
         {
-            if (bytes.Count <= DatagramModel.MaxDatagramLength)
+            if (bytes.Count <= DatagramModel.MaxDatasLength)
                 yield return bytes.Array;
             else
             {
@@ -195,10 +195,10 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
                 while (buffer.HasRemaining)
                 {
                     var remaining = buffer.Remaining;
-                    if (remaining <= DatagramModel.MaxDatagramLength)
+                    if (remaining <= DatagramModel.MaxDatasLength)
                         retVal = new Byte[remaining];
                     else
-                        retVal = new Byte[DatagramModel.MaxDatagramLength];
+                        retVal = new Byte[DatagramModel.MaxDatasLength];
                     buffer.Get(retVal, 0, retVal.Length);
                     yield return retVal;
                 }
