@@ -15,6 +15,8 @@
   <ItemGroup>
     <Compile Include="Core\AcceptorHandler.cs" />
     <Compile Include="Core\ConnectorHandler.cs" />
+    <Compile Include="Core\Tcp2UdpPipe.cs" />
+    <Compile Include="Core\Tcp2UdpPipeManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
