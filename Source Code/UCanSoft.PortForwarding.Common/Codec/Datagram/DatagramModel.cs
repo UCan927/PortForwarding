@@ -120,6 +120,11 @@ namespace UCanSoft.PortForwarding.Common.Codec.Datagram
             return retVal;
         }
 
+        public static String GenerateId()
+        {
+            return Guid.NewGuid().ToByteArray().ToHex();
+        }
+
         public IoBuffer ToIoBuffer()
         {
             IoBuffer retVal = null;

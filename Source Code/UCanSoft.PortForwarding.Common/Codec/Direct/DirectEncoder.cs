@@ -9,10 +9,10 @@ namespace UCanSoft.PortForwarding.Common.Codec.Direct
     {
         public override void Encode(IoSession session, object message, IProtocolEncoderOutput output)
         {
-            if (!(message is ArraySegment<Byte> bytes)
-                || bytes.Count <= 0)
+            if (!(message is Byte[] datas)
+                || datas.Length <= 0)
                 return;
-            var buffer = IoBuffer.Wrap(bytes.Array, bytes.Offset, bytes.Count);
+            var buffer = IoBuffer.Wrap(datas, 0, datas.Length);
             output.Write(buffer);
         }
     }

@@ -48,21 +48,16 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
         public override void MessageReceived(IoSession session, Object message)
         {
             _logger.Debug("收到[{0}]的消息", session.RemoteEndPoint);
-            if (!(message is ArraySegment<Byte> bytes))
+            if (!(message is Byte[] datas))
                 return;
-            var pipeSession = session.GetAttribute<IoSession>(PipelineSessionKey);
-            if (pipeSession == null)
-                return;
-            var context = SingleInstanceHelper<ConnectorHandler>.Instance.GetSessionContext(pipeSession);
-            context.Enqueue(bytes);
+            var pipe = Tcp2UdpPipeManager.Instance.GetPipe(session);
+            pipe?.Enqueue(datas);
         }
 
         public override void SessionClosed(IoSession session)
         {
-            var pipeSession = session.GetAttribute<IoSession>(PipelineSessionKey);
-            pipeSession?.Close(true);
-            session.RemoveAttribute(PipelineSessionKey);
-            _logger.Debug("与[{0}]的连接已断开.", session.RemoteEndPoint);
+            var pipe = Tcp2UdpPipeManager.Instance.Remove(session);
+            pipe?.Clear();
         }
 
         public override void ExceptionCaught(IoSession session, Exception cause)
