@@ -1,4 +1,5 @@
 ﻿using Mina.Core.Buffer;
+using Mina.Core.Service;
 using Mina.Core.Session;
 using System;
 using System.Collections.Concurrent;
@@ -27,7 +28,7 @@ namespace UCanSoft.PortForwarding.Tcp2Udp.Core
         public Int64 TcpSessionId { get { return TcpSession?.Id ?? -1; } }
         public Int64 UdpSessionId { get { return UdpSession?.Id ?? -1; } }
 
-        public Tcp2UdpPipe(IoSession tcpSession)
+        public Tcp2UdpPipe(IoSession tcpSession, IoConnector udpConnector)
         {
             Interlocked.Exchange(ref _tcpSession, tcpSession);
             _logger = NLog.LogManager.GetLogger($"{tcpSession.Handler.GetType().FullName}.SessionId.{tcpSession.Id}");
